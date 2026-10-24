@@ -14,7 +14,7 @@ internal sealed class TrayIcon : IDisposable
 
     public TrayIcon()
     {
-        _drawnIcon = DrawIcon();
+        _drawnIcon = LoadApplicationIcon() ?? DrawIcon();
         var menu = new ContextMenuStrip();
         menu.Items.Add("設定を開く", null, (_, _) => OpenSettingsRequested?.Invoke());
         menu.Items.Add(new ToolStripSeparator());
@@ -31,6 +31,21 @@ internal sealed class TrayIcon : IDisposable
 
     public void ShowBalloon(string title, string text) => _icon.ShowBalloonTip(3000, title, text, ToolTipIcon.Warning);
 
+    /// <summary>exe に埋め込まれたアプリアイコン（scripts/make-icon.ps1 で生成）。取れなければ null。</summary>
+    private static Icon? LoadApplicationIcon()
+    {
+        try
+        {
+            var exe = Environment.ProcessPath;
+            return exe is null ? null : Icon.ExtractAssociatedIcon(exe);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>アプリアイコンが取れない場合の予備。同じ図柄をその場で描く。</summary>
     private static Icon DrawIcon()
     {
         using var bitmap = new Bitmap(32, 32);

@@ -9,6 +9,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\DeskDig.ico</ApplicationIcon>
     <RootNamespace>DeskDig</RootNamespace>
     <AssemblyName>DeskDig</AssemblyName>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
