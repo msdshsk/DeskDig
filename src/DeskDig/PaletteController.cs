@@ -44,6 +44,8 @@ internal sealed class PaletteController : IDisposable
         _showMessage = showMessage;
         _enumerator = new WindowEnumerator(_desktops, _processes);
         Settings = store.LoadSettings();
+        // 自動起動の実態はレジストリにある（Windows の設定画面やインストーラーからも変わる）ので、起動時にそちらへ合わせる
+        Settings.AutoStart = AutoStartRegistration.IsEffectivelyEnabled();
         Favorites = store.LoadFavorites();
         PlacementProfiles = store.LoadPlacementProfiles();
         _messageWindow.MessageReceived += OnMessage;
@@ -56,8 +58,24 @@ internal sealed class PaletteController : IDisposable
         _tray.ExitRequested += Exit;
         _outsideClicks.ClickedOutside += () => _dispatcher.BeginInvoke(() => HidePalette(PaletteCloseReason.OutsideClick));
         _outsideClicks.Start();
+        RepairAutoStartPath();
         StartTriggers();
         _dispatcher.BeginInvoke(WarmUp, DispatcherPriority.ApplicationIdle);
+    }
+
+    /// <summary>自動起動がオンのまま exe の場所が変わっていたら（ポータブル版の移動など）、登録を現在の場所で書き直す。</summary>
+    private void RepairAutoStartPath()
+    {
+        if (!Settings.AutoStart || AutoStartRegistration.PointsToCurrentExecutable()) return;
+        try
+        {
+            AutoStartRegistration.Apply(true);
+            Diagnostics.Log("Auto-start registration repaired to current executable path");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Log("Auto-start repair failed", ex);
+        }
     }
 
     /// <summary>初回表示の遅延を避けるため、ウインドウ生成とアイコン読み込みを前倒しする。</summary>

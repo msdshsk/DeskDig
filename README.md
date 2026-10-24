@@ -25,12 +25,17 @@
 
 ## インストール
 
-[GitHub Releases](https://github.com/msdshsk/DeskDig/releases/latest) から zip をダウンロードして展開し、`DeskDig.exe` を起動します。インストーラーはなく、レジストリにも書き込みません（サインイン時の自動起動をオンにした場合のみ、起動エントリを登録します）。
+[GitHub Releases](https://github.com/msdshsk/DeskDig/releases/latest) から `DeskDig-Setup-<version>.exe` をダウンロードして実行します。管理者権限は不要で、ユーザー単位（`%LocalAppData%\Programs\DeskDig`）にインストールされます。.NET ランタイムは同梱されているので追加のインストールはありません。インストール時に「Windows サインイン時に自動起動」を選べます。アンインストールは Windows の「アプリ」から行えます。
 
-| 配布物 | 向いている環境 |
+zip で使いたい場合はポータブル版もあります。展開して `DeskDig.exe` を起動するだけで、インストーラーは使いません。
+
+| 配布物 | 位置づけ |
 |---|---|
-| `DeskDig-<version>-win-x64.zip` | .NET 9 デスクトップランタイムが入っている PC。小さい |
-| `DeskDig-<version>-win-x64-self-contained.zip` | ランタイムを入れたくない PC。単一の実行ファイルで、追加インストール不要 |
+| `DeskDig-Setup-<version>.exe` | 標準。インストーラー（ランタイム同梱、ユーザー単位） |
+| `DeskDig-<version>-win-x64.zip` | ポータブル。.NET 9 デスクトップランタイムが入っている PC 向けで小さい |
+| `DeskDig-<version>-win-x64-self-contained.zip` | ポータブル。ランタイム同梱の単一実行ファイル |
+
+ポータブル版で自動起動をオンにした場合、登録されるのはその時点の exe の場所です。フォルダを移動しても、次に手動で起動したときに登録先を現在の場所へ書き直します。
 
 ## ビルドと実行
 

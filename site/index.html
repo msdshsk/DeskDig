@@ -142,7 +142,7 @@
       <a class="btn" href="https://github.com/msdshsk/DeskDig/releases/latest">ダウンロード（GitHub Releases）</a>
       <a class="btn ghost" href="https://github.com/msdshsk/DeskDig">ソースコード</a>
     </div>
-    <p class="req">無料・MIT ライセンス。Windows 11 と .NET 9 デスクトップランタイムで動作します（ランタイム同梱版もあります）。</p>
+    <p class="req">無料・MIT ライセンス。Windows 11 向け。インストーラーは管理者権限不要で、.NET ランタイムを同梱しています。ポータブル版の zip もあります。</p>
   </div>
 </header>
 
@@ -210,11 +210,16 @@
   <div class="wrap">
     <h2><small>Install</small>インストール</h2>
     <ol class="steps">
-      <li><a href="https://github.com/msdshsk/DeskDig/releases/latest">GitHub Releases</a> から zip をダウンロードします。.NET 9 デスクトップランタイムが入っていない場合は <code>self-contained</code> 版を選ぶと追加インストールなしで動きます。</li>
-      <li>任意のフォルダに展開し、<code>DeskDig.exe</code> を起動します。タスクトレイに常駐します。</li>
-      <li>デスクトップの余白をダブルクリックしてパレットを開きます。サインイン時の自動起動は、トレイアイコンの右クリックメニューから開く設定画面でオンにできます。</li>
+      <li><a href="https://github.com/msdshsk/DeskDig/releases/latest">GitHub Releases</a> から <code>DeskDig-Setup-x.y.z.exe</code> をダウンロードして実行します。管理者権限は不要で、ユーザー単位にインストールされます。.NET ランタイムは同梱されています。</li>
+      <li>インストール中に「Windows サインイン時に自動起動」を選べます。あとから設定画面で変えることもできます。</li>
+      <li>インストールが終わるとタスクトレイに常駐します。デスクトップの余白をダブルクリックしてパレットを開いてください。</li>
     </ol>
-    <p>インストーラーやレジストリへの書き込みはありません。フォルダを削除すればアンインストール完了です（自動起動をオンにしていた場合は、先に設定画面でオフにしてください）。設定は <code>%APPDATA%\DeskDig\</code> に保存されます。</p>
+    <table>
+      <tr><th>DeskDig-Setup-x.y.z.exe</th><td>標準。インストーラー。ランタイム同梱、ユーザー単位、管理者権限不要</td></tr>
+      <tr><th>DeskDig-x.y.z-win-x64.zip</th><td>ポータブル。.NET 9 デスクトップランタイムが入っている PC 向けで小さい</td></tr>
+      <tr><th>DeskDig-x.y.z-win-x64-self-contained.zip</th><td>ポータブル。ランタイム同梱の単一実行ファイル。展開して起動するだけ</td></tr>
+    </table>
+    <p style="margin-top:16px">アンインストールは Windows の「設定 &gt; アプリ」から行えます。設定は <code>%APPDATA%\DeskDig\</code> に保存され、アンインストール後も残ります。ポータブル版はフォルダを削除すれば終わりです（自動起動をオンにしていた場合は、先に設定画面でオフにしてください）。</p>
   </div>
 </section>
 

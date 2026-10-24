@@ -28,6 +28,21 @@ public partial class App : Application
             return;
         }
 
+        // インストーラー用: 自動起動の登録だけを行って終了する（--autostart on|off）
+        if (e.Args.Length == 2 && e.Args[0] == "--autostart" && e.Args[1] is "on" or "off")
+        {
+            try
+            {
+                AutoStartRegistration.Apply(e.Args[1] == "on");
+            }
+            catch (Exception ex)
+            {
+                Diagnostics.Log("Auto-start registration via command line failed", ex);
+            }
+            Shutdown();
+            return;
+        }
+
         _mutex = new Mutex(initiallyOwned: true, MutexName, out bool createdNew);
         if (!createdNew)
         {
