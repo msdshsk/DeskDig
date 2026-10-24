@@ -92,7 +92,8 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupA
 [Run]
 ; 自動起動を選んだ場合は、アプリ側の設定ファイルにも反映させるための引数を付けて起動する
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--autostart on"; Flags: runhidden nowait; Tasks: autostart
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; インストーラーの環境変数（__COMPAT_LAYER 等）を引き継がせないため、エクスプローラー経由で起動する
+Filename: "{win}\explorer.exe"; Parameters: """{app}\{#MyAppExeName}"""; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 ; アンインストール前に常駐中のプロセスを終了する

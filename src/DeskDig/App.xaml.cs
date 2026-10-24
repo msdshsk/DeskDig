@@ -16,6 +16,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        SanitizeInheritedEnvironment();
         uint showMessage = NativeMethods.RegisterWindowMessage(ShowMessageName);
 
         // 検証用: デスクトップ余白判定だけを行って終了する（--hittest X Y）
@@ -37,6 +38,27 @@ public partial class App : Application
             {
                 var a = apps[i];
                 Diagnostics.Log($"  {i + 1,2}. {a.Name} | id={a.Id} | exe={a.TargetExecutablePath ?? "-"} | aumid={a.AppUserModelId ?? "-"}");
+            }
+            Shutdown();
+            return;
+        }
+
+        // 診断用: 指定した名前の PinnedApp を Launcher と同じ経路で起動して終了する（--launch <名前>）
+        if (e.Args.Length == 2 && e.Args[0] == "--launch")
+        {
+            var app = PinnedAppReader.ReadAll().FirstOrDefault(a => string.Equals(a.Name, e.Args[1], StringComparison.OrdinalIgnoreCase));
+            if (app is null) Diagnostics.Log($"Launch: '{e.Args[1]}' not found");
+            else
+            {
+                try
+                {
+                    PinnedAppReader.Launch(app);
+                    Diagnostics.Log($"Launch: started {app.Name} via {PinnedAppReader.ParsingNameOf(app)}");
+                }
+                catch (Exception ex)
+                {
+                    Diagnostics.Log($"Launch: {app.Name} failed", ex);
+                }
             }
             Shutdown();
             return;
@@ -77,6 +99,26 @@ public partial class App : Application
         _messageWindow = new MessageWindow();
         _controller = new PaletteController(Dispatcher, new StateStore(), _messageWindow, showMessage);
         _controller.Start();
+    }
+
+    /// <summary>
+    /// インストーラーなどから起動された場合に引き継ぐ環境変数のうち、Launcher から起動する子プロセスに
+    /// 悪影響を与えるものを自分の環境から外す。__COMPAT_LAYER は互換性シムを子プロセスにも適用させ、
+    /// 一部のアプリの起動を失敗させる（0xc00004bc 等）。
+    /// </summary>
+    private static void SanitizeInheritedEnvironment()
+    {
+        foreach (var name in new[] { "__COMPAT_LAYER", "__PSLockdownPolicy" })
+        {
+            if (Environment.GetEnvironmentVariable(name) is { } value)
+            {
+                Diagnostics.Log($"Removed inherited environment variable {name}={value}");
+                Environment.SetEnvironmentVariable(name, null);
+            }
+        }
+        // インストーラー経由では USERNAME が実際のユーザーと食い違うことがあるので、実際の値に戻す
+        if (!string.Equals(Environment.GetEnvironmentVariable("USERNAME"), Environment.UserName, StringComparison.OrdinalIgnoreCase))
+            Environment.SetEnvironmentVariable("USERNAME", Environment.UserName);
     }
 
     protected override void OnExit(ExitEventArgs e)
