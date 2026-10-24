@@ -4,6 +4,8 @@
 
 [紹介ページ](https://msdshsk.github.io/DeskDig/) · [ダウンロード](https://github.com/msdshsk/DeskDig/releases/latest) · [English summary](#english)
 
+![DeskDig のパレット（実物と同じ寸法・配色で再現したモック。ウインドウの中身はダミー）](site/assets/palette-mock.png)
+
 大きな高解像度ディスプレイで全画面化せずに作業していると、ウインドウは重なり合って埋もれていきます。DeskDig は、デスクトップの余白をダブルクリックするとマウスの手元にパレットを開き、開いているウインドウをライブサムネイル付きで一覧します。選べば前面に出ます。あわせて、ウインドウごとの配置の記録と復元、タスクバーに固定したアプリの起動を、同じパレット上で行えます。
 
 ## 機能

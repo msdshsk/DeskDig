@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<!--
+  紹介ページ用のモック。実際の Palette（src/DeskDig/Palette/PaletteWindow.xaml）と同じ寸法・配色を
+  HTML と CSS で再現し、ダミーのウインドウを CSS で描いている。実在のアプリ名やアイコンは使っていない。
+  PNG への書き出し: ヘッドレスブラウザで 1040x720 を 2 倍スケールで撮影する。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>DeskDig palette mock</title>
+<style>
+  :root {
+    --bg: #1F2229; --tile: #2B2F38; --tile-hi: #343A46; --line: #3A404C; --line-2: #4A5160;
+    --text: #E6E6E6; --muted: #9AA0AA; --hint: #6C7380; --input: #14161B; --accent: #61AFEF;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; }
+  body { font-family: "Segoe UI", "Yu Gothic UI", "Meiryo", system-ui, sans-serif; font-size: 13px; color: var(--text); }
+
+  /* ===== デスクトップ背景（撮影用。OGP で使う） ===== */
+  .desktop {
+    width: 1200px; height: 630px; position: relative; overflow: hidden;
+    background:
+      radial-gradient(1200px 600px at 80% 110%, #2c4a5e 0%, transparent 60%),
+      radial-gradient(900px 500px at 10% -10%, #3b3150 0%, transparent 60%),
+      linear-gradient(160deg, #15181f, #1b2130 60%, #101318);
+  }
+  .desktop .palette { position: absolute; left: 56px; top: 36px; transform: scale(.80); transform-origin: top left; }
+  .cursor { position: absolute; left: 26px; top: 22px; width: 22px; height: 30px; }
+  .shade { position: absolute; inset: 0;
+    background: linear-gradient(150deg, transparent 42%, rgba(10,12,16,.4) 58%, rgba(10,12,16,.92) 78%); }
+  .headline { position: absolute; right: 56px; bottom: 48px; text-align: right; }
+  .headline b { display: block; font-size: 38px; font-weight: 650; letter-spacing: -.01em; line-height: 1.22; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  .headline b em { font-style: normal; color: #E5C07B; }
+  .headline span { display: block; margin-top: 10px; font-size: 17px; color: #c9cdd4; text-shadow: 0 1px 8px rgba(0,0,0,.5); }
+
+  /* #palette-only: Palette 単体を等倍で撮る（紹介ページの図版用） */
+  body.palette-only .desktop { width: 1040px; height: 704px; background: transparent; }
+  body.palette-only .desktop .palette { left: 12px; top: 12px; transform: none; }
+  body.palette-only .cursor, body.palette-only .headline, body.palette-only .shade { display: none; }
+
+  /* ===== Palette 本体（XAML と同寸） ===== */
+  .palette {
+    width: 1016px; height: 680px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px; box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.4);
+    display: flex; flex-direction: column;
+  }
+  .filter { position: relative; margin: 4px 4px 6px; }
+  .filter .box { height: 36px; background: var(--input); border: 1px solid var(--line); border-radius: 3px; padding: 6px 8px; font-size: 14px; display: flex; align-items: center; }
+  .filter .hint { position: absolute; left: 12px; top: 0; height: 36px; display: flex; align-items: center; color: var(--hint); font-size: 13px; }
+  .filter .caret { width: 1px; height: 18px; background: var(--text); margin-left: 1px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .launcher { display: flex; flex-wrap: wrap; margin: 0 2px; }
+  .launcher .cell { width: 40px; height: 40px; margin: 2px; border-radius: 5px; border: 2px solid transparent; display: grid; place-items: center; }
+  .launcher .cell.sel { background: var(--tile-hi); border-color: var(--accent); }
+  .launcher .cell i { width: 28px; height: 28px; border-radius: 7px; display: block; position: relative; }
+  .launcher .cell i::after { content: ""; position: absolute; inset: 8px; border-radius: 3px; background: rgba(255,255,255,.85); }
+  .launcher .cell i.round { border-radius: 50%; } .launcher .cell i.round::after { border-radius: 50%; inset: 9px; }
+  .launcher .cell i.bar::after { inset: 12px 6px; }
+  .launcher .cell i.dot::after { inset: 10px; border-radius: 50%; }
+  .launcher .cell i.tri::after { background: none; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 12px solid rgba(255,255,255,.85); inset: auto; left: 7px; top: 7px; width: 0; height: 0; }
+  .launcher-name { margin: 2px 8px 0; height: 18px; color: var(--muted); font-size: 12px; }
+  .divider { height: 1px; background: var(--line); margin: 6px 4px 0; }
+
+  .entries { flex: 1; overflow: hidden; padding-right: 2px; }
+  .section { color: var(--muted); font-size: 11px; margin: 10px 8px 2px; }
+  .grid { display: flex; flex-wrap: wrap; }
+  .tile {
+    width: 240px; margin: 4px; padding: 6px; border-radius: 6px; background: var(--tile); border: 2px solid transparent;
+  }
+  .tile.sel { background: var(--tile-hi); border-color: var(--accent); }
+  .thumb { height: 130px; border-radius: 3px; overflow: hidden; position: relative; background: #fff; }
+  .meta { display: flex; margin-top: 6px; gap: 6px; align-items: flex-start; }
+  .meta .ic { width: 18px; height: 18px; border-radius: 4px; margin-top: 2px; flex: none; }
+  .meta .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta .title { opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta div { min-width: 0; }
+  .rule { height: 1px; background: var(--line-2); margin: 12px 8px 0; }
+
+  /* ===== ダミーウインドウ（サムネイルの中身） ===== */
+  .win { position: absolute; inset: 0; display: flex; flex-direction: column; font-size: 6px; }
+  .win .tb { height: 12px; display: flex; align-items: center; gap: 3px; padding: 0 5px; }
+  .win .tb b { width: 5px; height: 5px; border-radius: 50%; display: block; opacity: .9; }
+  .win .body { flex: 1; position: relative; overflow: hidden; }
+  .l { position: absolute; height: 4px; border-radius: 2px; }
+
+  /* エディタ */
+  .editor { background: #1e1e2a; }
+  .editor .tb { background: #2a2a38; }
+  .editor .tb b:nth-child(1) { background: #ff5f57; } .editor .tb b:nth-child(2) { background: #febc2e; } .editor .tb b:nth-child(3) { background: #28c840; }
+  .editor .gutter { position: absolute; left: 0; top: 0; bottom: 0; width: 18px; background: #23232f; }
+  .editor .l { left: 26px; }
+  .editor .k { background: #c678dd; } .editor .f { background: #61afef; } .editor .s { background: #98c379; } .editor .c { background: #5c6370; } .editor .v { background: #e5c07b; }
+
+  /* ブラウザ */
+  .browser { background: #fff; }
+  .browser .tb { background: #e9ecf1; height: 16px; }
+  .browser .tb .url { flex: 1; height: 8px; background: #fff; border-radius: 4px; }
+  .browser .body { background: #fff; }
+  .browser .hero { position: absolute; left: 0; right: 0; top: 0; height: 36px; background: linear-gradient(120deg, #3b82f6, #8b5cf6); }
+  .browser .l { background: #d1d5db; }
+  .browser .l.h { background: #374151; height: 6px; }
+
+  /* ターミナル */
+  .term { background: #0c0c0c; }
+  .term .tb { background: #1f1f1f; }
+  .term .l { left: 6px; height: 3px; background: #cccccc; opacity: .85; }
+  .term .l.p { background: #16c60c; } .term .l.y { background: #f9f1a5; }
+
+  /* 表計算 */
+  .sheet { background: #fff; }
+  .sheet .tb { background: #1d6f42; }
+  .sheet .body { background:
+    linear-gradient(#e5e7eb 1px, transparent 1px) 0 0 / 100% 9px,
+    linear-gradient(90deg, #e5e7eb 1px, transparent 1px) 0 0 / 24px 100%; }
+  .sheet .hdr { position: absolute; left: 0; right: 0; top: 0; height: 9px; background: #f3f4f6; }
+  .sheet .col { position: absolute; top: 0; bottom: 0; left: 0; width: 24px; background: #f3f4f6; }
+  .sheet .bar { position: absolute; bottom: 10px; width: 10px; background: #2563eb; border-radius: 1px; }
+
+  /* チャット */
+  .chat { background: #f4f5f7; }
+  .chat .tb { background: #5b5fc7; }
+  .chat .side { position: absolute; left: 0; top: 0; bottom: 0; width: 34px; background: #fff; border-right: 1px solid #e5e7eb; }
+  .chat .bub { position: absolute; height: 10px; border-radius: 5px; background: #fff; border: 1px solid #e5e7eb; }
+  .chat .bub.me { background: #5b5fc7; border-color: #5b5fc7; }
+
+  /* 画像ビューア */
+  .viewer { background: #202020; }
+  .viewer .tb { background: #2b2b2b; }
+  .viewer .pic { position: absolute; left: 18%; right: 18%; top: 10%; bottom: 14%; border-radius: 2px;
+    background: radial-gradient(circle at 30% 30%, #ffd166, transparent 35%), linear-gradient(180deg, #4cc9f0 0%, #4361ee 60%, #3a0ca3 100%); }
+
+  /* メモ */
+  .notes { background: #fffbe6; }
+  .notes .tb { background: #f5d66b; }
+  .notes .l { left: 8px; background: #a08a3c; opacity: .55; height: 3px; }
+
+  /* 設計ツール */
+  .design { background: #f0f0f3; }
+  .design .tb { background: #2c2c2c; }
+  .design .canvas { position: absolute; inset: 8px 8px 8px 30px; background: #fff; box-shadow: 0 0 0 1px #ddd; }
+  .design .tools { position: absolute; left: 0; top: 0; bottom: 0; width: 22px; background: #2c2c2c; }
+  .design .shape { position: absolute; border-radius: 3px; }
+
+  /* 最小化中（アイコン表示） */
+  .thumb.min { background: #2B2F38; display: grid; place-items: center; }
+  .thumb.min .big { width: 72px; height: 72px; border-radius: 16px; }
+  .tile.sel .thumb.min { background: #343A46; }
+</style>
+</head>
+<body>
+<script>if (location.hash === "#palette-only") document.body.classList.add("palette-only");</script>
+
+<div class="desktop" id="og">
+  <div class="palette" id="palette">
+    <div class="filter">
+      <div class="box"><span class="caret"></span></div>
+      <div class="hint" style="left:14px">入力して絞り込み（アプリ名 / タイトル / PinnedApp）</div>
+    </div>
+
+    <div class="launcher">
+      <div class="cell"><i style="background:#2563eb"></i></div>
+      <div class="cell"><i class="round" style="background:#16a34a"></i></div>
+      <div class="cell"><i class="bar" style="background:#7c3aed"></i></div>
+      <div class="cell sel"><i style="background:#0ea5e9"></i></div>
+      <div class="cell"><i class="dot" style="background:#f59e0b"></i></div>
+      <div class="cell"><i class="tri" style="background:#dc2626"></i></div>
+      <div class="cell"><i style="background:#0f766e"></i></div>
+      <div class="cell"><i class="round" style="background:#db2777"></i></div>
+      <div class="cell"><i class="bar" style="background:#4b5563"></i></div>
+      <div class="cell"><i style="background:#1d4ed8"></i></div>
+      <div class="cell"><i class="dot" style="background:#65a30d"></i></div>
+      <div class="cell"><i style="background:#9333ea"></i></div>
+      <div class="cell"><i class="round" style="background:#ea580c"></i></div>
+      <div class="cell"><i class="tri" style="background:#0891b2"></i></div>
+      <div class="cell"><i style="background:#be123c"></i></div>
+      <div class="cell"><i class="bar" style="background:#334155"></i></div>
+      <div class="cell"><i class="dot" style="background:#ca8a04"></i></div>
+      <div class="cell"><i style="background:#047857"></i></div>
+      <div class="cell"><i class="round" style="background:#6d28d9"></i></div>
+      <div class="cell"><i style="background:#b91c1c"></i></div>
+      <div class="cell"><i class="tri" style="background:#2563eb"></i></div>
+      <div class="cell"><i class="bar" style="background:#0d9488"></i></div>
+      <div class="cell"><i style="background:#a21caf"></i></div>
+      <div class="cell"><i class="dot" style="background:#d97706"></i></div>
+    </div>
+    <div class="launcher-name">Mail</div>
+    <div class="divider"></div>
+
+    <div class="entries">
+      <div class="section">Favorite</div>
+      <div class="grid">
+        <div class="tile">
+          <div class="thumb"><div class="win browser">
+            <div class="tb"><b style="background:#9ca3af"></b><div class="url"></div></div>
+            <div class="body"><div class="hero"></div>
+              <div class="l h" style="left:10px;top:44px;width:70px"></div>
+              <div class="l" style="left:10px;top:56px;width:150px"></div>
+              <div class="l" style="left:10px;top:64px;width:130px"></div>
+              <div class="l" style="left:10px;top:72px;width:160px"></div>
+              <div class="l" style="left:10px;top:84px;width:100px"></div>
+              <div class="l" style="left:10px;top:92px;width:140px"></div>
+            </div></div></div>
+          <div class="meta"><span class="ic" style="background:#2563eb"></span><div><div class="name">Browser</div><div class="title">仕様書 - 社内ドキュメント</div></div></div>
+        </div>
+        <div class="tile">
+          <div class="thumb"><div class="win editor">
+            <div class="tb"><b></b><b></b><b></b></div>
+            <div class="body"><div class="gutter"></div>
+              <div class="l k" style="top:8px;width:28px"></div><div class="l f" style="top:8px;left:58px;width:60px"></div>
+              <div class="l c" style="top:16px;width:90px"></div>
+              <div class="l v" style="top:24px;left:40px;width:30px"></div><div class="l s" style="top:24px;left:76px;width:70px"></div>
+              <div class="l k" style="top:32px;left:40px;width:22px"></div><div class="l f" style="top:32px;left:66px;width:48px"></div>
+              <div class="l v" style="top:40px;left:54px;width:60px"></div>
+              <div class="l s" style="top:48px;left:54px;width:90px"></div>
+              <div class="l k" style="top:56px;left:40px;width:30px"></div>
+              <div class="l c" style="top:72px;width:110px"></div>
+              <div class="l k" style="top:80px;width:36px"></div><div class="l f" style="top:80px;left:66px;width:52px"></div>
+              <div class="l v" style="top:88px;left:40px;width:70px"></div>
+              <div class="l s" style="top:96px;left:40px;width:40px"></div>
+            </div></div></div>
+          <div class="meta"><span class="ic" style="background:#0ea5e9"></span><div><div class="name">Code Editor</div><div class="title">PaletteController.cs - DeskDig</div></div></div>
+        </div>
+      </div>
+
+      <div class="section">現在のデスクトップ</div>
+      <div class="grid">
+        <div class="tile sel">
+          <div class="thumb"><div class="win term">
+            <div class="tb"></div>
+            <div class="body">
+              <div class="l p" style="top:8px;width:40px"></div><div class="l" style="top:8px;left:50px;width:60px"></div>
+              <div class="l" style="top:15px;width:120px"></div>
+              <div class="l" style="top:22px;width:90px"></div>
+              <div class="l y" style="top:29px;width:70px"></div>
+              <div class="l" style="top:36px;width:140px"></div>
+              <div class="l" style="top:43px;width:110px"></div>
+              <div class="l p" style="top:54px;width:40px"></div><div class="l" style="top:54px;left:50px;width:80px"></div>
+              <div class="l" style="top:61px;width:150px"></div>
+              <div class="l" style="top:68px;width:100px"></div>
+              <div class="l p" style="top:80px;width:40px"></div>
+            </div></div></div>
+          <div class="meta"><span class="ic" style="background:#4b5563"></span><div><div class="name">Terminal</div><div class="title">dotnet build DeskDig.sln</div></div></div>
+        </div>
+        <div class="tile">
+          <div class="thumb"><div class="win sheet">
+            <div class="tb"></div>
+            <div class="body"><div class="hdr"></div><div class="col"></div>
+              <div class="bar" style="left:40px;height:30px"></div>
+              <div class="bar" style="left:56px;height:48px"></div>
+              <div class="bar" style="left:72px;height:40px"></div>
+              <div class="bar" style="left:88px;height:62px"></div>
+              <div class="bar" style="left:104px;height:55px"></div>
+              <div class="bar" style="left:120px;height:70px"></div>
+              <div class="bar" style="left:136px;height:66px"></div>
+            </div></div></div>
+          <div class="meta"><span class="ic" style="background:#16a34a"></span><div><div class="name">Spreadsheet</div><div class="title">月次集計 2026-10.xlsx</div></div></div>
+        </div>
+        <div class="tile">
+          <div class="thumb"><div class="win chat">
+            <div class="tb"></div>
+            <div class="body"><div class="side"></div>
+              <div class="bub" style="left:42px;top:10px;width:90px"></div>
+              <div class="bub me" style="right:8px;top:26px;width:70px"></div>
+              <div class="bub" style="left:42px;top:42px;width:110px"></div>
+              <div class="bub" style="left:42px;top:56px;width:60px"></div>
+              <div class="bub me" style="right:8px;top:72px;width:95px"></div>
+              <div class="bub" style="left:42px;top:88px;width:80px"></div>
+            </div></div></div>
+          <div class="meta"><span class="ic" style="background:#7c3aed"></span><div><div class="name">Chat</div><div class="title">#dev-general</div></div></div>
+        </div>
+        <div class="tile">
+          <div class="thumb"><div class="win viewer">
+            <div class="tb"></div>
+            <div class="body"><div class="pic"></div></div></div></div>
+          <div class="meta"><span class="ic" style="background:#f59e0b"></span><div><div class="name">Image Viewer</div><div class="title">IMG_2041.jpg</div></div></div>
+        </div>
+        <div class="tile">
+          <div class="thumb"><div class="win design">
+            <div class="tb"></div>
+            <div class="body"><div class="tools"></div><div class="canvas">
+              <div class="shape" style="left:12px;top:10px;width:50px;height:30px;background:#60a5fa"></div>
+              <div class="shape" style="left:70px;top:18px;width:40px;height:40px;border-radius:50%;background:#f472b6"></div>
+              <div class="shape" style="left:20px;top:52px;width:90px;height:14px;background:#fbbf24"></div>
+              <div class="shape" style="left:120px;top:8px;width:30px;height:70px;background:#34d399"></div>
+            </div></div></div></div>
+          <div class="meta"><span class="ic" style="background:#db2777"></span><div><div class="name">Design Tool</div><div class="title">landing-page.draft</div></div></div>
+        </div>
+        <div class="tile">
+          <div class="thumb min"><span class="big" style="background:#0f766e"></span></div>
+          <div class="meta"><span class="ic" style="background:#0f766e"></span><div><div class="name">Music Player</div><div class="title">作業用プレイリスト（最小化）</div></div></div>
+        </div>
+        <div class="tile">
+          <div class="thumb"><div class="win notes">
+            <div class="tb"></div>
+            <div class="body">
+              <div class="l" style="top:10px;width:80px;height:5px;opacity:.8"></div>
+              <div class="l" style="top:22px;width:140px"></div>
+              <div class="l" style="top:30px;width:120px"></div>
+              <div class="l" style="top:38px;width:150px"></div>
+              <div class="l" style="top:52px;width:90px"></div>
+              <div class="l" style="top:60px;width:130px"></div>
+              <div class="l" style="top:68px;width:100px"></div>
+            </div></div></div>
+          <div class="meta"><span class="ic" style="background:#ca8a04"></span><div><div class="name">Notes</div><div class="title">打ち合わせメモ 10/24</div></div></div>
+        </div>
+      </div>
+
+      <div class="rule"></div>
+      <div class="section">他のデスクトップ</div>
+      <div class="grid">
+        <div class="tile">
+          <div class="thumb"><div class="win browser">
+            <div class="tb"><b style="background:#9ca3af"></b><div class="url"></div></div>
+            <div class="body">
+              <div class="l h" style="left:10px;top:10px;width:90px"></div>
+              <div class="l" style="left:10px;top:24px;width:150px"></div>
+              <div class="l" style="left:10px;top:32px;width:140px"></div>
+              <div class="l" style="left:10px;top:40px;width:160px"></div>
+              <div class="l" style="left:10px;top:54px;width:120px"></div>
+              <div class="l" style="left:10px;top:62px;width:150px"></div>
+              <div class="l" style="left:10px;top:70px;width:100px"></div>
+              <div class="l" style="left:10px;top:84px;width:140px"></div>
+            </div></div></div>
+          <div class="meta"><span class="ic" style="background:#2563eb"></span><div><div class="name">Browser</div><div class="title">調べもの - 検索結果</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="shade"></div>
+  <svg class="cursor" viewBox="0 0 22 30" aria-hidden="true"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 17 L20 17 Z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>
+
+  <div class="headline">
+    <b>埋もれたウインドウを、<br><em>ダブルクリック</em>で掘り出す。</b>
+    <span>DeskDig — Windows 11 向けウインドウ切替ツール</span>
+  </div>
+</div>
+
+</body>
+</html>

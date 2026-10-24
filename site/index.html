@@ -16,7 +16,12 @@
   <meta property="og:url" content="https://msdshsk.github.io/DeskDig/">
   <meta property="og:locale" content="ja_JP">
   <meta property="og:locale:alternate" content="en_US">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://msdshsk.github.io/DeskDig/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="DeskDig のパレット。開いているウインドウのサムネイルが並び、上段にタスクバー固定アプリが表示されている">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://msdshsk.github.io/DeskDig/assets/og-image.png">
 
   <script type="application/ld+json">
   {
@@ -29,6 +34,8 @@
     "url": "https://msdshsk.github.io/DeskDig/",
     "downloadUrl": "https://github.com/msdshsk/DeskDig/releases/latest",
     "softwareHelp": "https://github.com/msdshsk/DeskDig#readme",
+    "screenshot": "https://msdshsk.github.io/DeskDig/assets/palette-mock.png",
+    "image": "https://msdshsk.github.io/DeskDig/assets/og-image.png",
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
@@ -85,17 +92,7 @@
     h2 { font-size: 24px; margin: 0 0 24px; font-weight: 650; }
     h2 small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
 
-    .palette {
-      background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 12px;
-    }
-    .palette .tile { background: var(--panel-hi); border-radius: 6px; aspect-ratio: 16 / 11; border: 2px solid transparent; position: relative; }
-    .palette .tile::after { content: ""; position: absolute; left: 10%; right: 10%; bottom: 14%; height: 6px; border-radius: 3px; background: var(--line); }
-    .palette .tile.fav { border-color: var(--warm); }
-    .palette .tile.sel { border-color: var(--accent); }
-    .palette .row { grid-column: 1 / -1; display: flex; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-    .palette .row i { width: 22px; height: 22px; border-radius: 5px; background: var(--line); display: block; }
-    .palette .row i:nth-child(3n) { background: #4a5160; }
+    .shot { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 24px 60px rgba(0,0,0,.45); margin: 0 0 12px; }
     figcaption { font-size: 14px; color: var(--muted); }
 
     .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
@@ -153,12 +150,10 @@
   <div class="wrap">
     <h2><small>How it looks</small>パレットの構成</h2>
     <figure style="margin:0">
-      <div class="palette" aria-hidden="true">
-        <div class="row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="tile fav"></div><div class="tile"></div><div class="tile sel"></div><div class="tile"></div>
-        <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
-      </div>
-      <figcaption>上段にタスクバー固定アプリ、下段に開いているウインドウのサムネイル。お気に入りは最上段に固定され、最近このツールから選んだものほど前に並びます。</figcaption>
+      <img class="shot" src="assets/palette-mock.png" width="1040" height="704"
+           alt="DeskDig のパレット。上段にタスクバー固定アプリのアイコン、その下に Favorite、現在のデスクトップ、他のデスクトップの順でウインドウのサムネイルが並ぶ"
+           loading="eager" decoding="async">
+      <figcaption>上段にタスクバー固定アプリ、下段に開いているウインドウのサムネイル。お気に入りは最上段に固定され、最近このツールから選んだものほど前に並びます。画像は実物と同じ寸法・配色で再現したモックで、ウインドウの中身はダミーです。</figcaption>
     </figure>
   </div>
 </section>
