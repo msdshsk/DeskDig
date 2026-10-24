@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded by ADR-0003
 ---
 
 # PinnedApp の取得元はタスクバー固定フォルダとし、独自のアプリ登録機能を持たない

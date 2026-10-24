@@ -1,8 +1,10 @@
+using System.Buffers.Binary;
+
 namespace DeskDig.Core;
 
 /// <summary>
-/// Windows のタスクバーに固定されているアプリ 1 件。OS の固定状態を読み取ったもので、
-/// Id は固定ショートカットの名前。こちらで持つのは並び順だけ。
+/// Windows のタスクバーに固定されているアプリ 1 件。OS の固定状態を読み取ったもので、こちらで持つのは並び順だけ。
+/// Id は従来型アプリなら固定ショートカットのファイル名、パッケージ型（MSIX / ストア）なら AppUserModelId。
 /// </summary>
 public sealed record PinnedApp(
     string Id,
@@ -54,6 +56,34 @@ public static class PinnedAppOrder
         list.RemoveAt(from);
         list.Insert(to, moving);
         return list;
+    }
+}
+
+/// <summary>
+/// タスクバーの固定一覧を保持するレジストリ値（Taskband の Favorites）の分解。
+/// 値は「1 バイトのヘッダー、4 バイトのサイズ（リトルエンディアン）、そのサイズ分の PIDL」の繰り返しで、
+/// PIDL は 2 バイトの 0 で終わる。並びはタスクバーの表示順と一致する。
+/// PIDL の中身の解釈は OS のシェル API に任せ、ここでは区切りだけを扱う。
+/// </summary>
+public static class TaskbandFavorites
+{
+    private const int EntryHeaderLength = 1 + sizeof(int);
+
+    /// <summary>値を PIDL のバイト列に分解する。途中で形式が崩れていたら、そこまでの分を返す。</summary>
+    public static IReadOnlyList<byte[]> Split(ReadOnlySpan<byte> blob)
+    {
+        var result = new List<byte[]>();
+        int offset = 0;
+        while (offset + EntryHeaderLength <= blob.Length)
+        {
+            int size = BinaryPrimitives.ReadInt32LittleEndian(blob.Slice(offset + 1, sizeof(int)));
+            if (size < 2 || offset + EntryHeaderLength + size > blob.Length) break;
+            var pidl = blob.Slice(offset + EntryHeaderLength, size);
+            if (pidl[^1] != 0 || pidl[^2] != 0) break;
+            result.Add(pidl.ToArray());
+            offset += EntryHeaderLength + size;
+        }
+        return result;
     }
 }
 

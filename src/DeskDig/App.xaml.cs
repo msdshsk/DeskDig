@@ -28,6 +28,20 @@ public partial class App : Application
             return;
         }
 
+        // 診断用: タスクバーの固定一覧を読んでログに書き、終了する（--list-pinned）
+        if (e.Args.Length == 1 && e.Args[0] == "--list-pinned")
+        {
+            var apps = PinnedAppReader.ReadAll();
+            Diagnostics.Log($"ListPinned: {apps.Count} apps");
+            for (int i = 0; i < apps.Count; i++)
+            {
+                var a = apps[i];
+                Diagnostics.Log($"  {i + 1,2}. {a.Name} | id={a.Id} | exe={a.TargetExecutablePath ?? "-"} | aumid={a.AppUserModelId ?? "-"}");
+            }
+            Shutdown();
+            return;
+        }
+
         // インストーラー用: 自動起動の登録だけを行って終了する（--autostart on|off）
         if (e.Args.Length == 2 && e.Args[0] == "--autostart" && e.Args[1] is "on" or "off")
         {

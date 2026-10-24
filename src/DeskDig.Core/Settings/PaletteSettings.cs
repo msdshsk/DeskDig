@@ -9,6 +9,12 @@ public enum PaletteViewMode
     [Description("縦リスト")] List,
 }
 
+public enum LauncherOrderMode
+{
+    [Description("タスクバーと同じ順")] Taskbar,
+    [Description("自分で並べ替える")] Custom,
+}
+
 /// <summary>設定画面に 1 行として出す項目であることの宣言。設定画面はこの宣言から行を生成する。</summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class SettingAttribute(string label) : Attribute
@@ -36,6 +42,9 @@ public sealed class PaletteSettings
 
     [Setting("格子の列数", Min = 1, Max = 12)]
     public int GridColumns { get; set; } = 4;
+
+    [Setting("Launcher の並び順", Description = "「自分で並べ替える」では Palette 上でアイコンをドラッグして並べ替える")]
+    public LauncherOrderMode LauncherOrder { get; set; } = LauncherOrderMode.Taskbar;
 
     [Setting("Windows サインイン時に自動起動")]
     public bool AutoStart { get; set; }

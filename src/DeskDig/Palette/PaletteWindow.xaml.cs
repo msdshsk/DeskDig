@@ -252,6 +252,7 @@ public partial class PaletteWindow : Window
 
     private void PinnedApp_PreviewMouseMove(object sender, MouseEventArgs e)
     {
+        if (!_controller.LauncherReorderEnabled) return;
         if (_dragCandidate is null || e.LeftButton != MouseButtonState.Pressed) return;
         var delta = e.GetPosition(this) - _dragStart;
         if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;

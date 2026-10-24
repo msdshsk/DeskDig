@@ -84,8 +84,8 @@ internal sealed class PaletteController : IDisposable
         var sw = Stopwatch.StartNew();
         _window ??= new PaletteWindow(this);
         new System.Windows.Interop.WindowInteropHelper(_window).EnsureHandle();
-        _pinnedApps = PinnedAppOrder.Arrange(_store.LoadPinnedAppOrder(), PinnedAppReader.ReadAll());
-        foreach (var app in _pinnedApps) _icons.ForPinnedApp(PinnedAppReader.ShortcutPathOf(app), 32);
+        _pinnedApps = LoadPinnedApps();
+        foreach (var app in _pinnedApps) _icons.ForPinnedApp(app, 32);
         foreach (var entry in _enumerator.Enumerate(new HashSet<nint>())) _icons.ForEntry(entry, 32);
         Diagnostics.Log($"Warm-up done in {sw.ElapsedMilliseconds} ms");
     }
@@ -163,8 +163,8 @@ internal sealed class PaletteController : IDisposable
             HasPlacement = PlacementProfiles.HasProfileFor(e),
         }).ToList();
 
-        _pinnedApps = PinnedAppOrder.Arrange(_store.LoadPinnedAppOrder(), PinnedAppReader.ReadAll());
-        var apps = _pinnedApps.Select(a => new PinnedAppItem(a, _icons.ForPinnedApp(PinnedAppReader.ShortcutPathOf(a), 32))).ToList();
+        _pinnedApps = LoadPinnedApps();
+        var apps = _pinnedApps.Select(a => new PinnedAppItem(a, _icons.ForPinnedApp(a, 32))).ToList();
 
         _window.ViewModel.Load(items, arranged, apps);
         _window.ShowAt(anchor);
@@ -210,8 +210,19 @@ internal sealed class PaletteController : IDisposable
         HidePalette(PaletteCloseReason.Launched);
     }
 
+    /// <summary>Launcher のドラッグ並べ替えが有効か。タスクバーと同じ順に従う設定では無効。</summary>
+    public bool LauncherReorderEnabled => Settings.LauncherOrder == LauncherOrderMode.Custom;
+
+    /// <summary>タスクバーの固定状態を読み、設定に応じてタスクバー順のまま、または保存した独自の順に並べる。</summary>
+    private IReadOnlyList<PinnedApp> LoadPinnedApps()
+    {
+        var current = PinnedAppReader.ReadAll();
+        return LauncherReorderEnabled ? PinnedAppOrder.Arrange(_store.LoadPinnedAppOrder(), current) : current;
+    }
+
     public void MovePinnedApp(string movingId, string targetId)
     {
+        if (!LauncherReorderEnabled) return;
         _pinnedApps = PinnedAppOrder.Move(_pinnedApps, movingId, targetId);
         _store.SavePinnedAppOrder(_pinnedApps.Select(a => a.Id));
         _window?.ViewModel.ReorderLauncher(_pinnedApps);
@@ -263,7 +274,7 @@ internal sealed class PaletteController : IDisposable
         var arranged = PaletteOrder.Arrange(items.Select(i => i.Entry), Favorites, Recent);
         var apps = vm.LauncherItems.ToList();
         var filter = vm.FilterText;
-        vm.Load(items, arranged, _pinnedApps.Select(a => apps.FirstOrDefault(x => x.App.Id == a.Id) ?? new PinnedAppItem(a, _icons.ForPinnedApp(PinnedAppReader.ShortcutPathOf(a), 32))));
+        vm.Load(items, arranged, _pinnedApps.Select(a => apps.FirstOrDefault(x => x.App.Id == a.Id) ?? new PinnedAppItem(a, _icons.ForPinnedApp(a, 32))));
         vm.FilterText = filter;
     }
 

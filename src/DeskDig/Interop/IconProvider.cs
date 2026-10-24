@@ -26,7 +26,11 @@ internal sealed class IconProvider
         return ForParsingName(entry.ExecutablePath, size) ?? FromWindow((nint)entry.Id.Value);
     }
 
-    public ImageSource? ForPinnedApp(string shortcutPath, int size) => ForParsingName(shortcutPath, size);
+    public ImageSource? ForPinnedApp(PinnedApp app, int size)
+    {
+        var parsingName = PinnedAppReader.ParsingNameOf(app);
+        return parsingName is null ? null : ForParsingName(parsingName, size);
+    }
 
     public ImageSource? ForParsingName(string parsingName, int size)
     {
