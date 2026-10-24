@@ -1,0 +1,11 @@
+# 改行コードはリポジトリ内で LF に正規化し、Windows 固有のファイルだけ CRLF で取り出す
+* text=auto
+*.sln text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# バイナリ
+*.png binary
+*.ico binary
+*.jpg binary

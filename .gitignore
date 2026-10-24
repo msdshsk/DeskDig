@@ -1,0 +1,15 @@
+# ビルド成果物
+bin/
+obj/
+publish/
+TestResults/
+
+# IDE・ローカルツールの設定
+.vs/
+.vscode/
+.idea/
+*.user
+.kuroko/
+TestResults/
+publish/
+.kuroko/
