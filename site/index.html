@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeskDig - デスクトップのダブルクリックで埋もれたウインドウを掘り出す Windows ツール</title>
+  <meta name="description" content="DeskDig は Windows 11 向けの無料・オープンソースのウインドウ切替ツール。デスクトップの余白をダブルクリックすると、開いているウインドウをライブサムネイル付きで一覧し、クリックひとつで前面に出します。配置の記録と復元、タスクバー固定アプリのランチャーも同じパレットに。">
+  <link rel="canonical" href="https://msdshsk.github.io/DeskDig/">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#1f2229">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DeskDig">
+  <meta property="og:title" content="DeskDig - 埋もれたウインドウをダブルクリックで掘り出す">
+  <meta property="og:description" content="Windows 11 向けの無料・オープンソースのウインドウ切替ツール。デスクトップをダブルクリックするとサムネイル一覧が開き、クリックひとつで前面に出します。">
+  <meta property="og:url" content="https://msdshsk.github.io/DeskDig/">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DeskDig",
+    "operatingSystem": "Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "description": "デスクトップのダブルクリックで開いているウインドウをサムネイル一覧し、クリックひとつで前面に出す Windows 用の常駐ツール。配置の記録と復元、タスクバー固定アプリのランチャーを備える。",
+    "url": "https://msdshsk.github.io/DeskDig/",
+    "downloadUrl": "https://github.com/msdshsk/DeskDig/releases/latest",
+    "softwareHelp": "https://github.com/msdshsk/DeskDig#readme",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+    "author": { "@type": "Person", "name": "msd.shsk", "url": "https://github.com/msdshsk" },
+    "inLanguage": ["ja", "en"]
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #1f2229;
+      --panel: #2b2f38;
+      --panel-hi: #343a46;
+      --line: #3a404c;
+      --text: #e6e6e6;
+      --muted: #9aa0aa;
+      --accent: #61afef;
+      --warm: #e5c07b;
+      --max: 920px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI Variable Text", "Segoe UI", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+      font-size: 17px;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+    header.hero { padding: 72px 0 48px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+    .brand svg { width: 40px; height: 40px; flex: none; }
+    .brand span { font-size: 15px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+    h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.25; margin: 0 0 20px; font-weight: 650; letter-spacing: -.01em; }
+    h1 em { font-style: normal; color: var(--warm); }
+    .lead { font-size: 19px; color: #c9cdd4; max-width: 44em; margin: 0 0 32px; }
+    .lead-en { font-size: 15px; color: var(--muted); max-width: 48em; margin: -16px 0 32px; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-block; padding: 12px 22px; border-radius: 8px; font-weight: 600;
+      background: var(--accent); color: #10141b; border: 1px solid transparent;
+    }
+    .btn:hover { text-decoration: none; filter: brightness(1.08); }
+    .btn.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+    .req { font-size: 14px; color: var(--muted); margin-top: 14px; }
+
+    section { padding: 56px 0; border-bottom: 1px solid var(--line); }
+    h2 { font-size: 24px; margin: 0 0 24px; font-weight: 650; }
+    h2 small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+
+    .palette {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 12px;
+    }
+    .palette .tile { background: var(--panel-hi); border-radius: 6px; aspect-ratio: 16 / 11; border: 2px solid transparent; position: relative; }
+    .palette .tile::after { content: ""; position: absolute; left: 10%; right: 10%; bottom: 14%; height: 6px; border-radius: 3px; background: var(--line); }
+    .palette .tile.fav { border-color: var(--warm); }
+    .palette .tile.sel { border-color: var(--accent); }
+    .palette .row { grid-column: 1 / -1; display: flex; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+    .palette .row i { width: 22px; height: 22px; border-radius: 5px; background: var(--line); display: block; }
+    .palette .row i:nth-child(3n) { background: #4a5160; }
+    figcaption { font-size: 14px; color: var(--muted); }
+
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .feature { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; }
+    .feature h3 { margin: 0 0 8px; font-size: 17px; font-weight: 650; color: var(--warm); }
+    .feature p { margin: 0; font-size: 15.5px; color: #c9cdd4; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; width: 42%; }
+    kbd { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; background: var(--panel-hi); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+
+    ol.steps { padding-left: 1.3em; }
+    ol.steps li { margin-bottom: 10px; }
+    code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 14px; background: var(--panel-hi); padding: 1px 6px; border-radius: 4px; }
+
+    .faq dt { font-weight: 650; margin-top: 18px; }
+    .faq dd { margin: 4px 0 0; color: #c9cdd4; }
+
+    footer { padding: 40px 0 56px; font-size: 14px; color: var(--muted); }
+    footer p { margin: 6px 0; }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand" aria-hidden="true">
+      <svg viewBox="0 0 32 32" role="img" aria-label="DeskDig">
+        <rect x="2" y="2" width="28" height="28" rx="4" fill="#282c34"/>
+        <rect x="6" y="6" width="8" height="8" fill="#61afef"/>
+        <rect x="18" y="6" width="8" height="8" fill="#61afef"/>
+        <rect x="6" y="18" width="8" height="8" fill="#61afef"/>
+        <rect x="18" y="18" width="8" height="8" fill="#e5c07b"/>
+      </svg>
+      <span>DeskDig</span>
+    </div>
+    <h1>埋もれたウインドウを、<br>デスクトップの<em>ダブルクリック</em>で掘り出す。</h1>
+    <p class="lead">
+      DeskDig は Windows 11 向けのウインドウ切替ツールです。大きな画面で全画面化せずに作業していると、ウインドウは重なり合って埋もれていきます。
+      デスクトップの余白をダブルクリックするとマウスの手元にパレットが開き、開いているウインドウをライブサムネイル付きで一覧します。選べば前面に出ます。
+    </p>
+    <p class="lead-en">
+      DeskDig is a free, open-source window switcher for Windows 11. Double-click an empty spot on the desktop to get a thumbnail palette of every open window right under your mouse, pick one, and it comes to the front. It also remembers where each window belongs and launches your pinned taskbar apps.
+    </p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/msdshsk/DeskDig/releases/latest">ダウンロード（GitHub Releases）</a>
+      <a class="btn ghost" href="https://github.com/msdshsk/DeskDig">ソースコード</a>
+    </div>
+    <p class="req">無料・MIT ライセンス。Windows 11 と .NET 9 デスクトップランタイムで動作します（ランタイム同梱版もあります）。</p>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <h2><small>How it looks</small>パレットの構成</h2>
+    <figure style="margin:0">
+      <div class="palette" aria-hidden="true">
+        <div class="row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="tile fav"></div><div class="tile"></div><div class="tile sel"></div><div class="tile"></div>
+        <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+      </div>
+      <figcaption>上段にタスクバー固定アプリ、下段に開いているウインドウのサムネイル。お気に入りは最上段に固定され、最近このツールから選んだものほど前に並びます。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <h2><small>Features</small>機能</h2>
+    <div class="features">
+      <div class="feature">
+        <h3>デスクトップのダブルクリックで開く</h3>
+        <p>デスクトップの余白をダブルクリックすると、その場所の近くにパレットが開きます。アイコンの上では反応しません。グローバルホットキー（既定は Ctrl+Alt+Space）でも開けます。</p>
+      </div>
+      <div class="feature">
+        <h3>ライブサムネイルの一覧</h3>
+        <p>開いているウインドウを、動いているサムネイル・アプリアイコン・タイトル付きのタイルで並べます。タイル格子と縦リストを切り替えられます。</p>
+      </div>
+      <div class="feature">
+        <h3>往復しやすい並び順</h3>
+        <p>お気に入りが最上段、次にこのツールから最近選んだ順、残りは OS の重なり順。よく行き来する 2 つのウインドウは常に先頭近くにあります。</p>
+      </div>
+      <div class="feature">
+        <h3>配置の記録と復元</h3>
+        <p>右クリックで「現在の配置を記録」すると、以後そのアプリを選ぶたびに記録した位置とサイズに戻してから前面に出します。モニタが外れていても最寄りのモニタに収めます。</p>
+      </div>
+      <div class="feature">
+        <h3>タスクバー固定アプリのランチャー</h3>
+        <p>タスクバーに固定したアプリを上段に一覧します。登録作業は不要で、Windows の固定状態をそのまま読みます。既に開いていれば起動せずそのウインドウを前面に出します。</p>
+      </div>
+      <div class="feature">
+        <h3>文字入力で絞り込み</h3>
+        <p>パレットを開いたまま文字を打つと、アプリ名・タイトル・固定アプリ名で絞り込みます。矢印キーと Enter だけでも選べます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="usage">
+  <div class="wrap">
+    <h2><small>Usage</small>操作</h2>
+    <table>
+      <tr><th>デスクトップ余白をダブルクリック / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Space</kbd></th><td>パレットを開く（開いていれば閉じる）</td></tr>
+      <tr><th>タイルをクリック / <kbd>Enter</kbd></th><td>そのウインドウを前面に出す</td></tr>
+      <tr><th>固定アプリのアイコンをクリック</th><td>起動する。開いていればそのウインドウを前面に出す</td></tr>
+      <tr><th>文字を入力</th><td>一覧と固定アプリを絞り込む</td></tr>
+      <tr><th>矢印キー / <kbd>Tab</kbd></th><td>選択を移動する / ウインドウ一覧と固定アプリの間を行き来する</td></tr>
+      <tr><th>タイルを右クリック</th><td>お気に入りに追加・解除、現在の配置を記録、配置を解除</td></tr>
+      <tr><th>固定アプリのアイコンをドラッグ</th><td>ランチャー内の並び順を変える</td></tr>
+      <tr><th><kbd>Esc</kbd> / パレットの外をクリック</th><td>閉じる</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2><small>Install</small>インストール</h2>
+    <ol class="steps">
+      <li><a href="https://github.com/msdshsk/DeskDig/releases/latest">GitHub Releases</a> から zip をダウンロードします。.NET 9 デスクトップランタイムが入っていない場合は <code>self-contained</code> 版を選ぶと追加インストールなしで動きます。</li>
+      <li>任意のフォルダに展開し、<code>DeskDig.exe</code> を起動します。タスクトレイに常駐します。</li>
+      <li>デスクトップの余白をダブルクリックしてパレットを開きます。サインイン時の自動起動は、トレイアイコンの右クリックメニューから開く設定画面でオンにできます。</li>
+    </ol>
+    <p>インストーラーやレジストリへの書き込みはありません。フォルダを削除すればアンインストール完了です（自動起動をオンにしていた場合は、先に設定画面でオフにしてください）。設定は <code>%APPDATA%\DeskDig\</code> に保存されます。</p>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2><small>FAQ</small>よくある質問</h2>
+    <dl class="faq">
+      <dt>Win+Tab のタスクビューと何が違いますか？</dt>
+      <dd>トリガーがマウスで、パレットが手元に出ます。大きな画面で画面中央まで視線と手を動かさずに済みます。加えて、このツールから選んだ順で並ぶこと、配置を復元できること、固定アプリを同じ面から起動できることが違います。</dd>
+      <dt>デスクトップのアイコンをダブルクリックしても開いてしまいませんか？</dt>
+      <dd>開きません。アイコンの上かどうかを判定し、余白のときだけ反応します。</dd>
+      <dt>仮想デスクトップには対応していますか？</dt>
+      <dd>他のデスクトップにあるウインドウは区切りの下に表示され、選ぶとそのデスクトップに切り替わります。デスクトップ名の表示は、非公開 API に依存しない方針のため行っていません。</dd>
+      <dt>管理者権限は必要ですか？</dt>
+      <dd>不要です。管理者権限で動いているウインドウのサムネイルは表示されますが、前面化は OS の制限により失敗することがあります。</dd>
+      <dt>Windows 10 でも動きますか？</dt>
+      <dd>動作する見込みですが未検証です。動作報告や不具合は <a href="https://github.com/msdshsk/DeskDig/issues">Issues</a> へお寄せください。</dd>
+    </dl>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>DeskDig は <a href="https://github.com/msdshsk">msd.shsk</a> が MIT ライセンスで公開しているオープンソースソフトウェアです。</p>
+    <p><a href="https://github.com/msdshsk/DeskDig">GitHub</a> · <a href="https://github.com/msdshsk/DeskDig/releases">Releases</a> · <a href="https://github.com/msdshsk/DeskDig/issues">Issues</a> · <a href="https://github.com/msdshsk/DeskDig/blob/main/docs/spec.md">仕様</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

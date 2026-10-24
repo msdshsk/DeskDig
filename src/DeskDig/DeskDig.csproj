@@ -15,6 +15,19 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- Version はリリース時にタグから -p:Version= で上書きされる -->
+    <Version>0.1.0</Version>
+    <Product>DeskDig</Product>
+    <Authors>msd.shsk</Authors>
+    <Company>msd.shsk</Company>
+    <Copyright>Copyright (c) 2026 msd.shsk</Copyright>
+    <Description>デスクトップのダブルクリックで埋もれたウインドウを掘り出す Windows 用の常駐ツール</Description>
+    <RepositoryUrl>https://github.com/msdshsk/DeskDig</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <NeutralLanguage>ja-JP</NeutralLanguage>
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- WinForms はトレイアイコンにだけ使う。暗黙 using は WPF 型と衝突するので外す -->
     <Using Remove="System.Windows.Forms" />

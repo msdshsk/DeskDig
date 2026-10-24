@@ -2,6 +2,8 @@
 
 散らばって埋もれたウインドウを、デスクトップのダブルクリックひとつで掘り出す Windows 用の常駐ツールです。
 
+[紹介ページ](https://msdshsk.github.io/DeskDig/) · [ダウンロード](https://github.com/msdshsk/DeskDig/releases/latest) · [English summary](#english)
+
 大きな高解像度ディスプレイで全画面化せずに作業していると、ウインドウは重なり合って埋もれていきます。DeskDig は、デスクトップの余白をダブルクリックするとマウスの手元にパレットを開き、開いているウインドウをライブサムネイル付きで一覧します。選べば前面に出ます。あわせて、ウインドウごとの配置の記録と復元、タスクバーに固定したアプリの起動を、同じパレット上で行えます。
 
 ## 機能
@@ -18,6 +20,15 @@
 - Windows 11（Windows 10 でも動作する見込みですが未検証です）
 - .NET 9 デスクトップランタイム
 - 管理者権限は不要です
+
+## インストール
+
+[GitHub Releases](https://github.com/msdshsk/DeskDig/releases/latest) から zip をダウンロードして展開し、`DeskDig.exe` を起動します。インストーラーはなく、レジストリにも書き込みません（サインイン時の自動起動をオンにした場合のみ、起動エントリを登録します）。
+
+| 配布物 | 向いている環境 |
+|---|---|
+| `DeskDig-<version>-win-x64.zip` | .NET 9 デスクトップランタイムが入っている PC。小さい |
+| `DeskDig-<version>-win-x64-self-contained.zip` | ランタイムを入れたくない PC。単一の実行ファイルで、追加インストール不要 |
 
 ## ビルドと実行
 
@@ -70,3 +81,9 @@ dotnet publish src/DeskDig -c Release -r win-x64 --self-contained false -o publi
 ## ライセンス
 
 [MIT License](LICENSE)
+
+## English
+
+DeskDig is a free, open-source window switcher for Windows 11. Double-click an empty spot on the desktop and a palette opens right under your mouse, listing every open window with a live thumbnail. Click one and it comes to the front. The palette also remembers where each window belongs and restores that placement on activation, and it lists your pinned taskbar apps so you can launch or switch to them from the same place. Type to filter, or use the arrow keys and Enter. A global hotkey (`Ctrl+Alt+Space` by default) works too.
+
+Requires Windows 11 and the .NET 9 Desktop Runtime (a self-contained build is also provided). No installer, no admin rights. Settings live in `%APPDATA%\DeskDig\`.

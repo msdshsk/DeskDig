@@ -1,0 +1,63 @@
+name: Release
+
+# v1.2.3 形式のタグを push すると、ビルド・テストののち 2 種類の配布物を GitHub Releases に公開する。
+#   DeskDig-<version>-win-x64.zip               .NET 9 デスクトップランタイムがある PC 向け（小さい）
+#   DeskDig-<version>-win-x64-self-contained.zip ランタイム同梱の単一実行ファイル（大きいが追加インストール不要）
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Resolve version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: dotnet test tests/DeskDig.Core.Tests -c Release
+
+      - name: Publish (framework-dependent)
+        run: >
+          dotnet publish src/DeskDig -c Release -r win-x64 --self-contained false
+          -p:Version=${{ steps.version.outputs.version }} -p:DebugType=none
+          -o out/framework-dependent
+
+      - name: Publish (self-contained, single file)
+        run: >
+          dotnet publish src/DeskDig -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
+          -p:Version=${{ steps.version.outputs.version }} -p:DebugType=none
+          -o out/self-contained
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item LICENSE, README.md out/framework-dependent/
+          Copy-Item LICENSE, README.md out/self-contained/
+          Compress-Archive -Path out/framework-dependent/* -DestinationPath "dist/DeskDig-$v-win-x64.zip"
+          Compress-Archive -Path out/self-contained/* -DestinationPath "dist/DeskDig-$v-win-x64-self-contained.zip"
+          Get-ChildItem dist | ForEach-Object { "$($_.Name)  $([math]::Round($_.Length / 1MB, 1)) MB" }
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/*.zip `
+            --title "DeskDig ${{ steps.version.outputs.version }}" `
+            --generate-notes
