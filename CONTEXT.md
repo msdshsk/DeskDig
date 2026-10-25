@@ -60,6 +60,10 @@ _Avoid_: ランチャーメニュー, AppList, スタートメニュー
 Windows のタスクバーに固定されているアプリ 1 件。ユーザーがこのツールに登録するものではなく、OS の固定状態を読み取ったもの。
 _Avoid_: Shortcut, .lnk（実装詳細）, 登録アプリ, Favorite
 
+**SettingsShortcut**:
+Windows の設定アプリ内の特定ページ（バージョン情報、サウンド、ネットワークなど）へ一発で移動するための項目。行き先は OS が定める URI で、ユーザーが登録するのではなく、用意した候補から表示するものを選ぶ。PinnedApp とは別の段に出す。
+_Avoid_: QuickAction, 設定ボタン, コンパネリンク, Shortcut（PinnedApp の実体である .lnk と紛れる）
+
 ## Flagged ambiguities
 
 - **「固定」**: タスクバーの固定は **Pin / PinnedApp**、Palette 内の固定は **Favorite**。日本語で「固定」とだけ言われたら確認する。

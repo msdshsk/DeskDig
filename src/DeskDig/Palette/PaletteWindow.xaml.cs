@@ -280,6 +280,24 @@ public partial class PaletteWindow : Window
         }
     }
 
+    // ---- SettingsShortcut ----
+
+    private static SettingsShortcutItem? ShortcutOf(object sender) => (sender as FrameworkElement)?.DataContext as SettingsShortcutItem;
+
+    private void Shortcut_MouseEnter(object sender, MouseEventArgs e)
+    {
+        if (ShortcutOf(sender) is { } item) _viewModel.SelectShortcut(item);
+    }
+
+    private void Shortcut_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (ShortcutOf(sender) is { } item)
+        {
+            _controller.OpenSettingsShortcut(item.Shortcut);
+            e.Handled = true;
+        }
+    }
+
     private void PinnedApp_DragOver(object sender, DragEventArgs e)
     {
         e.Effects = e.Data.GetDataPresent(typeof(PinnedAppItem)) ? DragDropEffects.Move : DragDropEffects.None;

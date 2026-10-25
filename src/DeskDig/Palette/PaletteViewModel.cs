@@ -58,6 +58,16 @@ internal sealed class PinnedAppItem(PinnedApp app, ImageSource? icon) : Observab
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
 }
 
+/// <summary>Launcher の段の下に並ぶ SettingsShortcut 1 件。</summary>
+internal sealed class SettingsShortcutItem(SettingsShortcut shortcut) : ObservableObject
+{
+    private bool _isSelected;
+    public SettingsShortcut Shortcut { get; } = shortcut;
+    public string Name => Shortcut.Name;
+    public string Glyph => Shortcut.Glyph;
+    public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
+}
+
 internal enum SelectionRegion { Windows, Launcher }
 
 /// <summary>Palette 1 回分の表示状態。開くたびに Load で作り直す。</summary>
@@ -65,6 +75,7 @@ internal sealed class PaletteViewModel : ObservableObject
 {
     private readonly List<WindowEntryItem> _allEntries = new();
     private readonly List<PinnedAppItem> _allApps = new();
+    private readonly List<SettingsShortcutItem> _allShortcuts = new();
     private ArrangedWindowEntries _arranged = ArrangedWindowEntries.Empty;
     private ArrangedWindowEntries _visible = ArrangedWindowEntries.Empty;
     private string _filterText = string.Empty;
@@ -72,6 +83,7 @@ internal sealed class PaletteViewModel : ObservableObject
     private SelectionRegion _region = SelectionRegion.Windows;
 
     public ObservableCollection<PinnedAppItem> LauncherItems { get; } = new();
+    public ObservableCollection<SettingsShortcutItem> ShortcutItems { get; } = new();
     public ObservableCollection<WindowEntryItem> FavoriteItems { get; } = new();
     public ObservableCollection<WindowEntryItem> CurrentItems { get; } = new();
     public ObservableCollection<WindowEntryItem> OtherItems { get; } = new();
@@ -81,6 +93,10 @@ internal sealed class PaletteViewModel : ObservableObject
     public bool HasOther => OtherItems.Count > 0;
     public bool HasAnyEntry => HasFavorites || HasCurrent || HasOther;
     public bool HasLauncherItems => LauncherItems.Count > 0;
+    public bool HasShortcutItems => ShortcutItems.Count > 0;
+    /// <summary>Launcher の段（PinnedApp と SettingsShortcut）を表示するか。</summary>
+    public bool HasLauncherSection => HasLauncherItems || HasShortcutItems;
+    public IReadOnlyList<SettingsShortcutItem> AllShortcutItems => _allShortcuts;
 
     /// <summary>並び替え・絞り込み後の WindowEntry。Launcher の振り替え先の決定に使う。</summary>
     public ArrangedWindowEntries VisibleEntries => _visible;
@@ -107,12 +123,14 @@ internal sealed class PaletteViewModel : ObservableObject
     public WindowEntryItem? SelectedEntry => VisibleEntryItems().FirstOrDefault(i => i.IsSelected);
     public PinnedAppItem? SelectedPinnedApp => LauncherItems.FirstOrDefault(i => i.IsSelected);
 
-    public void Load(IEnumerable<WindowEntryItem> entries, ArrangedWindowEntries arranged, IEnumerable<PinnedAppItem> apps)
+    public void Load(IEnumerable<WindowEntryItem> entries, ArrangedWindowEntries arranged, IEnumerable<PinnedAppItem> apps, IEnumerable<SettingsShortcutItem> shortcuts)
     {
         _allEntries.Clear();
         _allEntries.AddRange(entries);
         _allApps.Clear();
         _allApps.AddRange(apps);
+        _allShortcuts.Clear();
+        _allShortcuts.AddRange(shortcuts);
         _arranged = arranged;
         _filterText = string.Empty;
         Raise(nameof(FilterText));
@@ -124,12 +142,14 @@ internal sealed class PaletteViewModel : ObservableObject
     {
         _allEntries.Clear();
         _allApps.Clear();
+        _allShortcuts.Clear();
         _arranged = ArrangedWindowEntries.Empty;
         _visible = ArrangedWindowEntries.Empty;
         FavoriteItems.Clear();
         CurrentItems.Clear();
         OtherItems.Clear();
         LauncherItems.Clear();
+        ShortcutItems.Clear();
         RaiseCounts();
     }
 
@@ -146,6 +166,9 @@ internal sealed class PaletteViewModel : ObservableObject
         var visibleApps = filter.Apply(_allApps.Select(a => a.App).ToList()).Select(a => a.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         LauncherItems.Clear();
         foreach (var app in _allApps.Where(a => visibleApps.Contains(a.App.Id))) LauncherItems.Add(app);
+
+        ShortcutItems.Clear();
+        foreach (var shortcut in _allShortcuts.Where(s => s.Shortcut.Matches(filter))) ShortcutItems.Add(shortcut);
 
         RaiseCounts();
         if (selectFirst) SelectFirst();
@@ -167,6 +190,17 @@ internal sealed class PaletteViewModel : ObservableObject
         Raise(nameof(HasOther));
         Raise(nameof(HasAnyEntry));
         Raise(nameof(HasLauncherItems));
+        Raise(nameof(HasShortcutItems));
+        Raise(nameof(HasLauncherSection));
+    }
+
+    /// <summary>ホバーで SettingsShortcut の名前を Launcher の名前欄に出す。選択状態は PinnedApp と排他。</summary>
+    public void SelectShortcut(SettingsShortcutItem? item)
+    {
+        foreach (var s in _allShortcuts) s.IsSelected = ReferenceEquals(s, item);
+        if (item is null) return;
+        foreach (var a in _allApps) a.IsSelected = false;
+        SelectedPinnedAppName = item.Name;
     }
 
     public IReadOnlyList<WindowEntryItem> VisibleEntryItems() => FavoriteItems.Concat(CurrentItems).Concat(OtherItems).ToList();
@@ -241,6 +275,7 @@ internal sealed class PaletteViewModel : ObservableObject
     public void SelectApp(PinnedAppItem? item)
     {
         foreach (var a in _allApps) a.IsSelected = ReferenceEquals(a, item);
+        foreach (var s in _allShortcuts) s.IsSelected = false;
         SelectedPinnedAppName = item?.Name;
         if (item is not null)
         {

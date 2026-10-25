@@ -166,7 +166,9 @@ internal sealed class PaletteController : IDisposable
         _pinnedApps = LoadPinnedApps();
         var apps = _pinnedApps.Select(a => new PinnedAppItem(a, _icons.ForPinnedApp(a, 32))).ToList();
 
-        _window.ViewModel.Load(items, arranged, apps);
+        var shortcuts = SettingsShortcutCatalog.Enabled(Settings).Select(s => new SettingsShortcutItem(s)).ToList();
+
+        _window.ViewModel.Load(items, arranged, apps, shortcuts);
         _window.ShowAt(anchor);
         _outsideClicks.Arm();
         Diagnostics.Log($"Palette shown at ({anchor.X},{anchor.Y}) in {sw.ElapsedMilliseconds} ms ({entries.Count} windows, {apps.Count} pinned apps)");
@@ -206,6 +208,22 @@ internal sealed class PaletteController : IDisposable
         catch (Exception ex)
         {
             _tray?.ShowBalloon("DeskDig", $"{app.Name} を起動できません: {ex.Message}");
+        }
+        HidePalette(PaletteCloseReason.Launched);
+    }
+
+    /// <summary>SettingsShortcut の行き先（ms-settings: 等）をシェルで開き、Palette を閉じる。</summary>
+    public void OpenSettingsShortcut(SettingsShortcut shortcut)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(shortcut.Destination) { UseShellExecute = true });
+            Diagnostics.Log($"Opened settings shortcut {shortcut.Id} ({shortcut.Destination})");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Log($"Settings shortcut {shortcut.Id} failed", ex);
+            _tray?.ShowBalloon("DeskDig", $"{shortcut.Name} を開けません: {ex.Message}");
         }
         HidePalette(PaletteCloseReason.Launched);
     }
@@ -274,7 +292,8 @@ internal sealed class PaletteController : IDisposable
         var arranged = PaletteOrder.Arrange(items.Select(i => i.Entry), Favorites, Recent);
         var apps = vm.LauncherItems.ToList();
         var filter = vm.FilterText;
-        vm.Load(items, arranged, _pinnedApps.Select(a => apps.FirstOrDefault(x => x.App.Id == a.Id) ?? new PinnedAppItem(a, _icons.ForPinnedApp(a, 32))));
+        var shortcuts = vm.AllShortcutItems.ToList();
+        vm.Load(items, arranged, _pinnedApps.Select(a => apps.FirstOrDefault(x => x.App.Id == a.Id) ?? new PinnedAppItem(a, _icons.ForPinnedApp(a, 32))), shortcuts);
         vm.FilterText = filter;
     }
 

@@ -96,7 +96,26 @@
 - **起動/振り替え**: PinnedApp に対応する WindowEntry が 1 件以上あれば、§4.3 の並び順で最上位の 1 件を Activate する。無ければ起動する。
 - 文字入力による絞り込みは PinnedApp にも効く。
 
-### 4.8 常駐と設定
+### 4.8 SettingsShortcut
+
+- **目的**: 階層が深いわりに頻繁に開く Windows の設定ページへ、Palette からマウス操作ひとつで移動する。
+- **候補と既定**: 候補は固定の一覧として持ち、設定画面のチェックで表示するものを選ぶ。任意の URI を登録する機能は持たない。
+
+  | 候補 | 行き先 | 既定 |
+  |---|---|---|
+  | バージョン情報 | ms-settings:about | 表示 |
+  | サウンド | ms-settings:sound | 表示 |
+  | ネットワークとインターネット | ms-settings:network | 表示 |
+  | Wi-Fi | ms-settings:network-wifi | 非表示 |
+  | ディスプレイ | ms-settings:display | 非表示 |
+  | Bluetooth とデバイス | ms-settings:bluetooth | 非表示 |
+  | サウンド（従来のダイアログ） | mmsys.cpl | 非表示 |
+
+- **表示**: Launcher の段の直下に、PinnedApp と区別できる記号アイコンで並べる。ホバーまたは選択で名前を表示する。
+- **操作**: クリックで行き先を開き、Palette を閉じる。文字入力による絞り込みは名前と別名（例: 「音量」「Wi-Fi」「バージョン」）に効く。
+- **起動**: 行き先をシェルに渡す。設定アプリが既に開いていればそのウインドウが該当ページに切り替わる（OS の挙動）。
+
+### 4.9 常駐と設定
 
 - タスクトレイアイコンを持つ。メニューは「設定を開く」「終了」。
 - Windows サインイン時の自動起動は設定でオン/オフ。実体は HKCU の Run キーで、表示する状態はレジストリ（Windows の「スタートアップ」設定による無効化を含む）に合わせる。オンのまま exe の場所が変わっていたら、起動時に登録先を現在の場所へ書き直す。コマンドライン `--autostart on|off` で登録だけを行って終了できる（インストーラーが使う）。
@@ -104,6 +123,7 @@
   - 有効な TriggerSource と各設定（Hotkey のキー）
   - 表示形式（タイル格子 / 縦リスト）、格子の列数
   - 自動起動
+  - 表示する SettingsShortcut（候補ごとのオン/オフ）
   - PlacementProfile 一覧（WindowMatcher の編集と削除）
   - Favorite 一覧（削除）
 - 設定・PlacementProfile・Favorite・PinnedApp の並び順は `%APPDATA%\DeskDig\` 配下の JSON に保存する。RecentActivation は保存しない。
@@ -125,6 +145,7 @@
 6. Launcher に 40 件以上の PinnedApp が並び、ドラッグで順序を変えると再起動後も保たれる。既に開いている PinnedApp を押すと新規起動せず既存ウインドウが前面に出る。
 7. ホットキーで開いた Palette に文字を打つと、一致するウインドウと PinnedApp だけが残る。Enter で先頭を Activate する。
 8. 文字入力中に Esc で Palette が閉じ、外をクリックしても閉じる。
+9. Palette の SettingsShortcut「サウンド」をクリックすると、設定アプリのサウンドページが開いて Palette が閉じる。「音量」と入力すると「サウンド」だけが残る。設定画面で「Wi-Fi」をオンにすると、次に開いた Palette に Wi-Fi が現れる。
 
 ## 7. MVP 外
 

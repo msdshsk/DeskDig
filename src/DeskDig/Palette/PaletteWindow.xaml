@@ -120,6 +120,29 @@
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
+        <!-- SettingsShortcut: PinnedApp と区別するため、画像アイコンではなく記号フォントの小さなセル -->
+        <DataTemplate x:Key="SettingsShortcutTile" DataType="{x:Type local:SettingsShortcutItem}">
+            <Border x:Name="Cell" Height="30" Margin="2" Padding="8,0" CornerRadius="5"
+                    Background="#262A33" BorderThickness="1" BorderBrush="#3A404C" Cursor="Hand"
+                    ToolTip="{Binding Name}"
+                    MouseLeftButtonUp="Shortcut_MouseLeftButtonUp"
+                    MouseEnter="Shortcut_MouseEnter">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Glyph}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14"
+                               Foreground="#9AA0AA" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Name}" FontSize="12" Foreground="#C9CDD4" Margin="6,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+            <DataTemplate.Triggers>
+                <Trigger SourceName="Cell" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Cell" Property="Background" Value="#343A46" />
+                </Trigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Cell" Property="BorderBrush" Value="#61AFEF" />
+                    <Setter TargetName="Cell" Property="Background" Value="#343A46" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
     </Window.Resources>
 
     <Border BorderBrush="#3A404C" BorderThickness="1">
@@ -153,8 +176,8 @@
                 </TextBlock>
             </Grid>
 
-            <!-- Launcher -->
-            <StackPanel Grid.Row="1" Visibility="{Binding HasLauncherItems, Converter={StaticResource BoolToVis}}">
+            <!-- Launcher（PinnedApp の段と、その下の SettingsShortcut の段） -->
+            <StackPanel Grid.Row="1" Visibility="{Binding HasLauncherSection, Converter={StaticResource BoolToVis}}">
                 <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl x:Name="LauncherList" ItemsSource="{Binding LauncherItems}" ItemTemplate="{StaticResource PinnedAppTile}" Margin="2,0">
                         <ItemsControl.ItemsPanel>
@@ -164,6 +187,14 @@
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
                 </ScrollViewer>
+                <ItemsControl x:Name="ShortcutList" ItemsSource="{Binding ShortcutItems}" ItemTemplate="{StaticResource SettingsShortcutTile}" Margin="2,2,2,0"
+                              Visibility="{Binding HasShortcutItems, Converter={StaticResource BoolToVis}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
                 <TextBlock Margin="8,2,8,0" Height="18" Foreground="#9AA0AA" Text="{Binding SelectedPinnedAppName}" TextTrimming="CharacterEllipsis" />
             </StackPanel>
 
