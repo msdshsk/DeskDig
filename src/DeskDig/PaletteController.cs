@@ -277,24 +277,33 @@ internal sealed class PaletteController : IDisposable
     {
         if (_sidePanel is null) return;
         var audio = Audio;
+        _sidePanel.Sync(() =>
+        {
+            RefreshAudioSection(audio, EDataFlow.Render, _sidePanelViewModel.Output);
+            RefreshAudioSection(audio, EDataFlow.Capture, _sidePanelViewModel.Input);
+        });
+    }
+
+    private static void RefreshAudioSection(AudioDeviceService? audio, EDataFlow flow, AudioSectionViewModel section)
+    {
         IReadOnlyList<(string, string, bool)> devices = [];
         AudioVolumeState? volume = null;
         if (audio is not null)
         {
             try
             {
-                devices = audio.GetOutputDevices().Select(d => (d.Id, d.Name, d.IsDefault)).ToList();
-                volume = audio.GetDefaultVolume();
+                devices = audio.GetDevices(flow).Select(d => (d.Id, d.Name, d.IsDefault)).ToList();
+                volume = audio.GetDefaultVolume(flow);
             }
             catch (Exception ex)
             {
-                Diagnostics.Log("Audio refresh failed", ex);
+                Diagnostics.Log($"Audio refresh failed ({flow})", ex);
             }
         }
-        _sidePanel.Sync(() => _sidePanelViewModel.SetAudioState(devices, volume is null ? null : volume.Level * 100.0, volume?.IsMuted));
+        section.SetState(devices, volume is null ? null : volume.Level * 100.0, volume?.IsMuted);
     }
 
-    /// <summary>既定の出力デバイスを切り替える。Palette は閉じない。失敗したら通知し、ms-settings:sound への退避を出す。</summary>
+    /// <summary>既定のデバイス（出力・入力のどちらでも）を切り替える。Palette は閉じない。失敗したら通知し、ms-settings:sound への退避を出す。</summary>
     public void SetDefaultAudioDevice(string deviceId)
     {
         try
@@ -307,31 +316,31 @@ internal sealed class PaletteController : IDisposable
         {
             Diagnostics.Log("Default audio device switch failed", ex);
             _sidePanelViewModel.ShowSoundFallback = true;
-            _tray?.ShowBalloon("DeskDig", "出力デバイスの切替に失敗しました。Windows のサウンド設定から切り替えてください。");
+            _tray?.ShowBalloon("DeskDig", "デバイスの切替に失敗しました。Windows のサウンド設定から切り替えてください。");
         }
     }
 
-    public void SetAudioVolume(double level)
+    public void SetAudioVolume(EDataFlow flow, double level)
     {
         try
         {
-            Audio?.SetDefaultVolume((float)level);
+            Audio?.SetDefaultVolume(flow, (float)level);
         }
         catch (Exception ex)
         {
-            Diagnostics.Log("Volume change failed", ex);
+            Diagnostics.Log($"Volume change failed ({flow})", ex);
         }
     }
 
-    public void SetAudioMuted(bool muted)
+    public void SetAudioMuted(EDataFlow flow, bool muted)
     {
         try
         {
-            Audio?.SetDefaultMuted(muted);
+            Audio?.SetDefaultMuted(flow, muted);
         }
         catch (Exception ex)
         {
-            Diagnostics.Log("Mute change failed", ex);
+            Diagnostics.Log($"Mute change failed ({flow})", ex);
         }
     }
 

@@ -75,7 +75,7 @@
         </DataTemplate>
 
         <DataTemplate x:Key="DeviceRow" DataType="{x:Type local:AudioDeviceItem}">
-            <Border x:Name="Row" Margin="2,1" Padding="8,6" CornerRadius="5" Background="#262A33" BorderThickness="1" BorderBrush="Transparent"
+            <Border x:Name="Row" Margin="2,1" Padding="8,5" CornerRadius="5" Background="#262A33" BorderThickness="1" BorderBrush="Transparent"
                     Cursor="Hand" MouseLeftButtonUp="Device_MouseLeftButtonUp" ToolTip="{Binding Name}">
                 <DockPanel>
                     <TextBlock x:Name="Mark" DockPanel.Dock="Left" Style="{StaticResource Glyph}" Text="&#xE73E;" Width="18" FontSize="13"
@@ -136,38 +136,56 @@
                 </ItemsControl>
                 <Rectangle DockPanel.Dock="Top" Height="1" Fill="#3A404C" Margin="4,10,4,0" />
 
-                <!-- 本体: AudioControl -->
-                <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionLabel}" Text="AudioControl — 出力デバイス" />
+                <!-- 退避ボタン（下に固定。既定の切替に失敗したときだけ出る） -->
+                <Button DockPanel.Dock="Bottom" Style="{StaticResource FlatButton}" Margin="4,8,4,4" HorizontalContentAlignment="Center"
+                        Click="SoundFallback_Click"
+                        Visibility="{Binding ShowSoundFallback, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE7BA;" Foreground="#E5C07B" FontSize="13" />
+                        <TextBlock Text="切替に失敗しました。サウンドの設定を開く" FontSize="12" Margin="6,0,0,0" />
+                    </StackPanel>
+                </Button>
 
-                <!-- 音量とミュート（下に固定） -->
-                <StackPanel DockPanel.Dock="Bottom" Margin="4,8,4,4">
-                    <Button Style="{StaticResource FlatButton}" Margin="0,0,0,8" HorizontalContentAlignment="Center"
-                            Click="SoundFallback_Click"
-                            Visibility="{Binding ShowSoundFallback, Converter={StaticResource BoolToVis}}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Style="{StaticResource Glyph}" Text="&#xE7BA;" Foreground="#E5C07B" FontSize="13" />
-                            <TextBlock Text="切替に失敗しました。サウンドの設定を開く" FontSize="12" Margin="6,0,0,0" />
-                        </StackPanel>
-                    </Button>
-                    <DockPanel IsEnabled="{Binding HasDefaultDevice}">
-                        <ToggleButton DockPanel.Dock="Left" Style="{StaticResource FlatToggle}" Padding="7,5" Width="34"
-                                      HorizontalContentAlignment="Center"
-                                      IsChecked="{Binding IsMuted, Mode=TwoWay}" Checked="Mute_Changed" Unchecked="Mute_Changed" ToolTip="ミュート">
-                            <TextBlock Style="{StaticResource Glyph}" Text="{Binding MuteGlyph}" FontSize="14" />
-                        </ToggleButton>
-                        <TextBlock DockPanel.Dock="Right" Width="34" TextAlignment="Right" VerticalAlignment="Center" FontSize="12" Foreground="#9AA0AA"
-                                   Text="{Binding Volume, StringFormat={}{0:0}}" />
-                        <Slider x:Name="VolumeSlider" Minimum="0" Maximum="100" Margin="8,0" VerticalAlignment="Center"
-                                IsMoveToPointEnabled="True" Focusable="False"
-                                Value="{Binding Volume, Mode=TwoWay}" ValueChanged="Volume_ValueChanged" />
-                    </DockPanel>
-                </StackPanel>
-
+                <!-- 本体: AudioControl。出力（スピーカー）と入力（マイク）を独立した段で並べ、それぞれ既定の切替・音量・ミュートを持つ -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <ItemsControl ItemsSource="{Binding Devices}" ItemTemplate="{StaticResource DeviceRow}" />
-                        <TextBlock Margin="8,12" Foreground="#6C7380" HorizontalAlignment="Center" Text="出力デバイスがありません"
-                                   Visibility="{Binding HasDevices, Converter={StaticResource InverseBoolToVis}}" />
+                        <!-- 出力 -->
+                        <StackPanel DataContext="{Binding Output}">
+                            <TextBlock Style="{StaticResource SectionLabel}" Text="{Binding Title}" />
+                            <ItemsControl ItemsSource="{Binding Devices}" ItemTemplate="{StaticResource DeviceRow}" />
+                            <TextBlock Margin="8,8" Foreground="#6C7380" HorizontalAlignment="Center" Text="{Binding EmptyText}"
+                                       Visibility="{Binding HasDevices, Converter={StaticResource InverseBoolToVis}}" />
+                            <DockPanel Margin="4,6,4,0" IsEnabled="{Binding HasDefaultDevice}">
+                                <ToggleButton DockPanel.Dock="Left" Style="{StaticResource FlatToggle}" Padding="7,5" Width="34" HorizontalContentAlignment="Center"
+                                              IsChecked="{Binding IsMuted, Mode=TwoWay}" Checked="OutputMute_Changed" Unchecked="OutputMute_Changed" ToolTip="出力をミュート">
+                                    <TextBlock Style="{StaticResource Glyph}" Text="{Binding MuteGlyph}" FontSize="14" />
+                                </ToggleButton>
+                                <TextBlock DockPanel.Dock="Right" Width="34" TextAlignment="Right" VerticalAlignment="Center" FontSize="12" Foreground="#9AA0AA"
+                                           Text="{Binding Volume, StringFormat={}{0:0}}" />
+                                <Slider Minimum="0" Maximum="100" Margin="8,0" VerticalAlignment="Center" IsMoveToPointEnabled="True" Focusable="False"
+                                        Value="{Binding Volume, Mode=TwoWay}" ValueChanged="OutputVolume_ValueChanged" />
+                            </DockPanel>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="#3A404C" Margin="4,12,4,0" />
+
+                        <!-- 入力 -->
+                        <StackPanel DataContext="{Binding Input}">
+                            <TextBlock Style="{StaticResource SectionLabel}" Text="{Binding Title}" />
+                            <ItemsControl ItemsSource="{Binding Devices}" ItemTemplate="{StaticResource DeviceRow}" />
+                            <TextBlock Margin="8,8" Foreground="#6C7380" HorizontalAlignment="Center" Text="{Binding EmptyText}"
+                                       Visibility="{Binding HasDevices, Converter={StaticResource InverseBoolToVis}}" />
+                            <DockPanel Margin="4,6,4,0" IsEnabled="{Binding HasDefaultDevice}">
+                                <ToggleButton DockPanel.Dock="Left" Style="{StaticResource FlatToggle}" Padding="7,5" Width="34" HorizontalContentAlignment="Center"
+                                              IsChecked="{Binding IsMuted, Mode=TwoWay}" Checked="InputMute_Changed" Unchecked="InputMute_Changed" ToolTip="マイクをミュート">
+                                    <TextBlock Style="{StaticResource Glyph}" Text="{Binding MuteGlyph}" FontSize="14" />
+                                </ToggleButton>
+                                <TextBlock DockPanel.Dock="Right" Width="34" TextAlignment="Right" VerticalAlignment="Center" FontSize="12" Foreground="#9AA0AA"
+                                           Text="{Binding Volume, StringFormat={}{0:0}}" />
+                                <Slider Minimum="0" Maximum="100" Margin="8,0" VerticalAlignment="Center" IsMoveToPointEnabled="True" Focusable="False"
+                                        Value="{Binding Volume, Mode=TwoWay}" ValueChanged="InputVolume_ValueChanged" />
+                            </DockPanel>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>

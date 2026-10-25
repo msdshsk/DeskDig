@@ -14,13 +14,46 @@ internal sealed class SettingsShortcutItem(SettingsShortcut shortcut)
     public string Glyph => Shortcut.Glyph;
 }
 
-/// <summary>AudioControl の出力デバイス 1 件。</summary>
+/// <summary>AudioControl のデバイス 1 件（出力または入力）。</summary>
 internal sealed class AudioDeviceItem(string id, string name, bool isDefault) : ObservableObject
 {
     private bool _isDefault = isDefault;
     public string Id { get; } = id;
     public string Name { get; } = name;
     public bool IsDefault { get => _isDefault; set => Set(ref _isDefault, value); }
+}
+
+/// <summary>AudioControl の一方向分（出力または入力）: デバイス一覧と既定デバイスの音量・ミュート。</summary>
+internal sealed class AudioSectionViewModel(string title, string mutedGlyph, string unmutedGlyph, string emptyText) : ObservableObject
+{
+    private double _volume;
+    private bool _isMuted;
+    private bool _hasDefaultDevice;
+
+    public string Title { get; } = title;
+    public string EmptyText { get; } = emptyText;
+    public ObservableCollection<AudioDeviceItem> Devices { get; } = new();
+    public bool HasDevices => Devices.Count > 0;
+
+    /// <summary>0..100。スライダーに結ぶ。</summary>
+    public double Volume { get => _volume; set => Set(ref _volume, value); }
+    public bool IsMuted
+    {
+        get => _isMuted;
+        set { if (Set(ref _isMuted, value)) Raise(nameof(MuteGlyph)); }
+    }
+    public string MuteGlyph => IsMuted ? mutedGlyph : unmutedGlyph;
+    public bool HasDefaultDevice { get => _hasDefaultDevice; set => Set(ref _hasDefaultDevice, value); }
+
+    public void SetState(IReadOnlyList<(string Id, string Name, bool IsDefault)> devices, double? volume, bool? muted)
+    {
+        Devices.Clear();
+        foreach (var d in devices) Devices.Add(new AudioDeviceItem(d.Id, d.Name, d.IsDefault));
+        Raise(nameof(HasDevices));
+        HasDefaultDevice = volume is not null;
+        Volume = volume ?? 0;
+        IsMuted = muted ?? false;
+    }
 }
 
 /// <summary>SystemSummary の 1 行。</summary>
@@ -31,9 +64,6 @@ internal sealed class SidePanelViewModel : ObservableObject
 {
     private SidePanelKind _kind = SidePanelKind.None;
     private bool _alwaysShown;
-    private double _volume;
-    private bool _isMuted;
-    private bool _hasDefaultDevice;
     private bool _showSoundFallback;
     private string _hotkeyText = string.Empty;
     private string _triggerText = string.Empty;
@@ -67,32 +97,14 @@ internal sealed class SidePanelViewModel : ObservableObject
     /// <summary>AlwaysShown。ピン型ボタンと双方向に結び、変更は Controller が設定へ保存する。</summary>
     public bool AlwaysShown { get => _alwaysShown; set => Set(ref _alwaysShown, value); }
 
-    public ObservableCollection<AudioDeviceItem> Devices { get; } = new();
-    public bool HasDevices => Devices.Count > 0;
+    /// <summary>出力（スピーカー / イヤホン）。</summary>
+    public AudioSectionViewModel Output { get; } = new("出力（スピーカー）", "", "", "出力デバイスがありません");
 
-    /// <summary>0..100。スライダーに結ぶ。</summary>
-    public double Volume { get => _volume; set => Set(ref _volume, value); }
-    public bool IsMuted
-    {
-        get => _isMuted;
-        set { if (Set(ref _isMuted, value)) Raise(nameof(MuteGlyph)); }
-    }
-    public string MuteGlyph => IsMuted ? "" : "";
-    public bool HasDefaultDevice { get => _hasDefaultDevice; set => Set(ref _hasDefaultDevice, value); }
+    /// <summary>入力（マイク）。出力とは独立に既定を選ぶ。</summary>
+    public AudioSectionViewModel Input { get; } = new("入力（マイク）", "", "", "入力デバイスがありません");
 
     /// <summary>既定の切替に失敗したあと、ms-settings:sound への退避ボタンを出す。</summary>
     public bool ShowSoundFallback { get => _showSoundFallback; set => Set(ref _showSoundFallback, value); }
-
-    /// <summary>デバイス一覧と音量を差し替える。UI スレッドで呼ぶ。</summary>
-    public void SetAudioState(IReadOnlyList<(string Id, string Name, bool IsDefault)> devices, double? volume, bool? muted)
-    {
-        Devices.Clear();
-        foreach (var d in devices) Devices.Add(new AudioDeviceItem(d.Id, d.Name, d.IsDefault));
-        Raise(nameof(HasDevices));
-        HasDefaultDevice = volume is not null;
-        Volume = volume ?? 0;
-        IsMuted = muted ?? false;
-    }
 
     // ---- InfoPanel ----
 

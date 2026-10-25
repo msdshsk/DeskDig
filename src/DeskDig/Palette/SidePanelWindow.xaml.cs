@@ -119,16 +119,28 @@ public partial class SidePanelWindow : Window
         }
     }
 
-    private void Volume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    private void OutputVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (_syncing || !IsLoaded) return;
-        _controller.SetAudioVolume(e.NewValue / 100.0);
+        _controller.SetAudioVolume(EDataFlow.Render, e.NewValue / 100.0);
     }
 
-    private void Mute_Changed(object sender, RoutedEventArgs e)
+    private void OutputMute_Changed(object sender, RoutedEventArgs e)
     {
         if (_syncing || !IsLoaded) return;
-        _controller.SetAudioMuted(_viewModel.IsMuted);
+        _controller.SetAudioMuted(EDataFlow.Render, _viewModel.Output.IsMuted);
+    }
+
+    private void InputVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_syncing || !IsLoaded) return;
+        _controller.SetAudioVolume(EDataFlow.Capture, e.NewValue / 100.0);
+    }
+
+    private void InputMute_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_syncing || !IsLoaded) return;
+        _controller.SetAudioMuted(EDataFlow.Capture, _viewModel.Input.IsMuted);
     }
 
     private void SoundFallback_Click(object sender, RoutedEventArgs e) => _controller.OpenSoundSettingsFallback();

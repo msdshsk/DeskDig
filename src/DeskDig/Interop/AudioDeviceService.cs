@@ -2,14 +2,14 @@ using System.Runtime.InteropServices;
 
 namespace DeskDig.Interop;
 
-/// <summary>出力デバイス 1 件。Id は Core Audio のエンドポイント ID。</summary>
-internal sealed record AudioOutputDevice(string Id, string Name, bool IsDefault);
+/// <summary>音声デバイス 1 件。Id は Core Audio のエンドポイント ID。Flow は出力（Render）か入力（Capture）か。</summary>
+internal sealed record AudioDevice(string Id, string Name, bool IsDefault, EDataFlow Flow);
 
-/// <summary>既定の出力デバイスの音量（0..1）とミュート。</summary>
+/// <summary>既定デバイスの音量（0..1）とミュート。</summary>
 internal sealed record AudioVolumeState(float Level, bool IsMuted);
 
 /// <summary>
-/// Core Audio による出力デバイスの列挙・既定の切替・音量・ミュート・デバイス変化の通知。
+/// Core Audio による音声デバイスの列挙・既定の切替・音量・ミュート・デバイス変化の通知。出力（スピーカー）と入力（マイク）を同じ経路で扱う。
 /// 列挙・音量・ミュート・通知は公開 API（IMMDeviceEnumerator / IAudioEndpointVolume）のみで動く。
 /// 既定の切替だけは非公開の IPolicyConfig に依存する（ADR-0004）。失敗時は例外を投げ、呼び出し側が退避を提供する。
 /// </summary>
@@ -33,16 +33,16 @@ internal sealed class AudioDeviceService : IDisposable
         Marshal.ThrowExceptionForHR(_enumerator.RegisterEndpointNotificationCallback(_notifications));
     }
 
-    /// <summary>有効な出力デバイス。既定を先頭に、残りは名前順。</summary>
-    public IReadOnlyList<AudioOutputDevice> GetOutputDevices()
+    /// <summary>指定方向の有効なデバイス。既定を先頭に、残りは名前順。</summary>
+    public IReadOnlyList<AudioDevice> GetDevices(EDataFlow flow)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        string? defaultId = GetDefaultDeviceId();
-        Marshal.ThrowExceptionForHR(_enumerator.EnumAudioEndpoints(EDataFlow.Render, DeviceState.Active, out var collection));
+        string? defaultId = GetDefaultDeviceId(flow);
+        Marshal.ThrowExceptionForHR(_enumerator.EnumAudioEndpoints(flow, DeviceState.Active, out var collection));
         try
         {
             Marshal.ThrowExceptionForHR(collection.GetCount(out uint count));
-            var devices = new List<AudioOutputDevice>((int)count);
+            var devices = new List<AudioDevice>((int)count);
             for (uint i = 0; i < count; i++)
             {
                 Marshal.ThrowExceptionForHR(collection.Item(i, out var device));
@@ -50,7 +50,7 @@ internal sealed class AudioDeviceService : IDisposable
                 {
                     Marshal.ThrowExceptionForHR(device.GetId(out string id));
                     string name = FriendlyNameOf(device) ?? "名前のないデバイス";
-                    devices.Add(new AudioOutputDevice(id, name, string.Equals(id, defaultId, StringComparison.OrdinalIgnoreCase)));
+                    devices.Add(new AudioDevice(id, name, string.Equals(id, defaultId, StringComparison.OrdinalIgnoreCase), flow));
                 }
                 finally
                 {
@@ -65,7 +65,7 @@ internal sealed class AudioDeviceService : IDisposable
         }
     }
 
-    /// <summary>既定の出力デバイスを切り替える（Console / Multimedia / Communications のすべて）。非公開 API に依存する。</summary>
+    /// <summary>既定デバイスを切り替える（Console / Multimedia / Communications のすべて）。出力・入力のどちらのエンドポイント ID でもよい。非公開 API に依存する。</summary>
     public void SetDefaultDevice(string deviceId)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -82,11 +82,11 @@ internal sealed class AudioDeviceService : IDisposable
         }
     }
 
-    /// <summary>既定の出力デバイスの音量とミュート。既定が無ければ null。</summary>
-    public AudioVolumeState? GetDefaultVolume()
+    /// <summary>指定方向の既定デバイスの音量とミュート。既定が無ければ null。</summary>
+    public AudioVolumeState? GetDefaultVolume(EDataFlow flow)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        var device = GetDefaultDevice();
+        var device = GetDefaultDevice(flow);
         if (device is null) return null;
         try
         {
@@ -108,16 +108,16 @@ internal sealed class AudioDeviceService : IDisposable
         }
     }
 
-    public void SetDefaultVolume(float level) =>
-        WithDefaultVolume(v => v.SetMasterVolumeLevelScalar(Math.Clamp(level, 0f, 1f), 0));
+    public void SetDefaultVolume(EDataFlow flow, float level) =>
+        WithDefaultVolume(flow, v => v.SetMasterVolumeLevelScalar(Math.Clamp(level, 0f, 1f), 0));
 
-    public void SetDefaultMuted(bool muted) =>
-        WithDefaultVolume(v => v.SetMute(muted, 0));
+    public void SetDefaultMuted(EDataFlow flow, bool muted) =>
+        WithDefaultVolume(flow, v => v.SetMute(muted, 0));
 
-    private void WithDefaultVolume(Func<IAudioEndpointVolume, int> operation)
+    private void WithDefaultVolume(EDataFlow flow, Func<IAudioEndpointVolume, int> operation)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        var device = GetDefaultDevice() ?? throw new InvalidOperationException("既定の出力デバイスがありません。");
+        var device = GetDefaultDevice(flow) ?? throw new InvalidOperationException(flow == EDataFlow.Capture ? "既定の入力デバイスがありません。" : "既定の出力デバイスがありません。");
         try
         {
             var volume = ActivateVolume(device);
@@ -143,9 +143,9 @@ internal sealed class AudioDeviceService : IDisposable
         return (IAudioEndpointVolume)instance;
     }
 
-    private string? GetDefaultDeviceId()
+    private string? GetDefaultDeviceId(EDataFlow flow)
     {
-        var device = GetDefaultDevice();
+        var device = GetDefaultDevice(flow);
         if (device is null) return null;
         try
         {
@@ -158,9 +158,9 @@ internal sealed class AudioDeviceService : IDisposable
         }
     }
 
-    private IMMDevice? GetDefaultDevice()
+    private IMMDevice? GetDefaultDevice(EDataFlow flow)
     {
-        int hr = _enumerator.GetDefaultAudioEndpoint(EDataFlow.Render, ERole.Console, out var device);
+        int hr = _enumerator.GetDefaultAudioEndpoint(flow, ERole.Console, out var device);
         if (hr == ElementNotFound) return null;
         Marshal.ThrowExceptionForHR(hr);
         return device;
