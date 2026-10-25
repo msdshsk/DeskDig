@@ -30,7 +30,8 @@
     <!-- 警告 -->
     <SolidColorBrush x:Key="Theme.Warning" Color="#E5C07B" />
     <!-- PinnedApp のアイコン背景の板。Palette の面より一段明るく、黒で描かれたアイコンも見えるようにする -->
-    <SolidColorBrush x:Key="Theme.IconPlate" Color="#363C49" />
-    <SolidColorBrush x:Key="Theme.IconPlateHover" Color="#434A58" />
+    <!-- PinnedApp のアイコンの板は Palette の背景と同色にし、Theme ごとに見えるアイコンが変わることを受け入れる -->
+    <SolidColorBrush x:Key="Theme.IconPlate" Color="#1F2229" />
+    <SolidColorBrush x:Key="Theme.IconPlateHover" Color="#343A46" />
 
 </ResourceDictionary>

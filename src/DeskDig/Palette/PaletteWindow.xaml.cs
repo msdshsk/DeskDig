@@ -48,6 +48,36 @@ public partial class PaletteWindow : Window
         PreviewKeyDown += OnPreviewKeyDown;
     }
 
+    // ---- ドラッグによる移動 ----
+
+    private bool _dragging;
+
+    /// <summary>上端の帯をドラッグして Palette を移動する。移動中は SidePanel を追従させる。</summary>
+    private void DragHandle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ButtonState != MouseButtonState.Pressed) return;
+        _dragging = true;
+        try
+        {
+            DragMove();
+        }
+        catch (InvalidOperationException)
+        {
+            // ボタンが既に離れていた場合は無視
+        }
+        finally
+        {
+            _dragging = false;
+        }
+        _controller.OnPaletteMoved();
+    }
+
+    protected override void OnLocationChanged(EventArgs e)
+    {
+        base.OnLocationChanged(e);
+        if (_dragging && IsVisible) _controller.OnPaletteMoved();
+    }
+
     internal PaletteViewModel ViewModel => _viewModel;
     internal nint Handle => _hwnd;
 

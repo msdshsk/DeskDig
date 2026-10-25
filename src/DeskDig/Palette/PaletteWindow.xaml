@@ -158,7 +158,13 @@
     </Window.Resources>
 
     <Border BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1">
-        <Grid Margin="8">
+      <DockPanel>
+        <!-- 上端の帯。ここをドラッグすると Palette を移動できる（画面の上端近くで開いたときに手元へ引き寄せる用途） -->
+        <Border DockPanel.Dock="Top" Height="14" Background="Transparent" Cursor="SizeAll" ToolTip="ドラッグで移動"
+                MouseLeftButtonDown="DragHandle_MouseLeftButtonDown">
+            <Border Width="36" Height="4" CornerRadius="2" Background="{DynamicResource Theme.Border}" VerticalAlignment="Center" />
+        </Border>
+        <Grid Margin="8,0,8,8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -233,5 +239,6 @@
                 </StackPanel>
             </ScrollViewer>
         </Grid>
+      </DockPanel>
     </Border>
 </Window>

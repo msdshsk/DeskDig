@@ -232,6 +232,13 @@ internal sealed class PaletteController : IDisposable
         Diagnostics.Log($"SidePanel opened ({kind})");
     }
 
+    /// <summary>Palette がドラッグで移動したとき、開いている SidePanel を新しい位置の横へ付け直す。</summary>
+    public void OnPaletteMoved()
+    {
+        if (!IsSidePanelOpen || _window is null || _window.Handle == 0) return;
+        _sidePanel!.ShowBeside(_window.Handle);
+    }
+
     public void CloseSidePanel()
     {
         if (!IsSidePanelOpen) return;

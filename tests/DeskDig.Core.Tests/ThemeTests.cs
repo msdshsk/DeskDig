@@ -101,12 +101,12 @@ public class ThemeDictionaryTests
         var dark = LoadBrushes("Dark");
         var light = LoadBrushes("Light");
 
-        // 黒で描かれたアイコンが Dark で、白で描かれたアイコンが Light で見えるよう、板は面より一段強い対比を持つ
-        Assert.True(Luminance(dark["Theme.IconPlate"]) > Luminance(dark["Theme.Surface"]) * 1.2, "Dark: IconPlate should be clearly lighter than Surface");
-        Assert.True(Luminance(light["Theme.IconPlate"]) < Luminance(light["Theme.Surface"]) * 0.8, "Light: IconPlate should be clearly darker than Surface");
-        // 板の上で黒（Dark）/ 白（Light）のアイコンが見える
-        Assert.True(Contrast(dark["Theme.IconPlate"], (0, 0, 0)) >= 1.5, "Dark: black icon on IconPlate");
-        Assert.True(Contrast(light["Theme.IconPlate"], (255, 255, 255)) >= 1.3, "Light: white icon on IconPlate");
+        // 板は Palette の背景と同色（Theme を切り替えることで見えるアイコンが変わる、という割り切り）
+        Assert.Equal(dark["Theme.Background"], dark["Theme.IconPlate"]);
+        Assert.Equal(light["Theme.Background"], light["Theme.IconPlate"]);
+        // ホバー時だけ面が浮く
+        Assert.NotEqual(dark["Theme.IconPlate"], dark["Theme.IconPlateHover"]);
+        Assert.NotEqual(light["Theme.IconPlate"], light["Theme.IconPlateHover"]);
     }
 
     [Fact]
