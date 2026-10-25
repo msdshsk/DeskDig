@@ -22,7 +22,10 @@ internal static class PackagedAppLogo
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern int GetPackagePathByFullName(string packageFullName, ref uint pathLength, StringBuilder? path);
 
-    private static readonly Dictionary<string, string?> LogoBaseCache = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>マニフェストから読んだロゴの基準パスと、板付き表示に使う背景色（transparent なら null）。</summary>
+    private sealed record LogoInfo(string LogoBase, Color? BackgroundColor);
+
+    private static readonly Dictionary<string, LogoInfo?> LogoInfoCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>ロゴを読む。取れなければ null（呼び出し側がシェル経由に退避する）。</summary>
     public static ImageSource? Load(string aumid, int size, LogoBackdrop backdrop)
@@ -38,7 +41,11 @@ internal static class PackagedAppLogo
             image.UriSource = new Uri(file, UriKind.Absolute);
             image.EndInit();
             image.Freeze();
-            return image;
+
+            // 透過版（altform）が無く無印を使うときは、タスクバーと同じくマニフェストの背景色で板を敷く
+            bool plated = !Path.GetFileName(file).Contains("altform-", StringComparison.OrdinalIgnoreCase);
+            var background = ResolveInfo(aumid)?.BackgroundColor;
+            return plated && background is { } color ? Plate(image, color) : image;
         }
         catch (Exception ex)
         {
@@ -50,7 +57,7 @@ internal static class PackagedAppLogo
     /// <summary>サイズと背景に合うロゴ画像のパス。診断にも使う。</summary>
     public static string? ResolveFile(string aumid, int size, LogoBackdrop backdrop)
     {
-        string? logoBase = ResolveLogoBase(aumid);
+        string? logoBase = ResolveInfo(aumid)?.LogoBase;
         if (logoBase is null) return null;
 
         string directory = Path.GetDirectoryName(logoBase)!;
@@ -62,15 +69,40 @@ internal static class PackagedAppLogo
         return chosen is null ? null : Path.Combine(directory, chosen);
     }
 
-    /// <summary>AppxManifest.xml の Square44x44Logo を絶対パス（修飾子なしの基準名）で返す。</summary>
-    private static string? ResolveLogoBase(string aumid)
+    /// <summary>ロゴを背景色の板の上に描く。</summary>
+    private static ImageSource Plate(BitmapSource logo, Color background)
     {
-        lock (LogoBaseCache)
+        int w = logo.PixelWidth, h = logo.PixelHeight;
+        var visual = new DrawingVisual();
+        using (var dc = visual.RenderOpen())
         {
-            if (LogoBaseCache.TryGetValue(aumid, out var cached)) return cached;
+            dc.DrawRectangle(new SolidColorBrush(background), null, new System.Windows.Rect(0, 0, w, h));
+            dc.DrawImage(logo, new System.Windows.Rect(0, 0, w, h));
         }
+        var target = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+        target.Render(visual);
+        target.Freeze();
+        return target;
+    }
 
-        string? result = null;
+    private static LogoInfo? ResolveInfo(string aumid)
+    {
+        lock (LogoInfoCache)
+        {
+            if (LogoInfoCache.TryGetValue(aumid, out var cached)) return cached;
+        }
+        var info = ReadInfo(aumid);
+        lock (LogoInfoCache)
+        {
+            LogoInfoCache[aumid] = info;
+        }
+        return info;
+    }
+
+    /// <summary>AppxManifest.xml の Square44x44Logo（修飾子なしの基準名の絶対パス）と BackgroundColor を読む。</summary>
+    private static LogoInfo? ReadInfo(string aumid)
+    {
+        LogoInfo? result = null;
         int bang = aumid.IndexOf('!');
         if (bang > 0)
         {
@@ -86,15 +118,27 @@ internal static class PackagedAppLogo
                     .FirstOrDefault(e => e.Name.LocalName == "Application" && string.Equals((string?)e.Attribute("Id"), appId, StringComparison.OrdinalIgnoreCase));
                 var visual = application?.Elements().FirstOrDefault(e => e.Name.LocalName == "VisualElements");
                 string? logo = (string?)visual?.Attribute("Square44x44Logo");
-                if (!string.IsNullOrWhiteSpace(logo)) result = Path.Combine(packagePath!, logo.Replace('/', '\\'));
+                if (!string.IsNullOrWhiteSpace(logo))
+                {
+                    result = new LogoInfo(Path.Combine(packagePath!, logo.Replace('/', '\\')), ParseBackground((string?)visual?.Attribute("BackgroundColor")));
+                }
             }
         }
-
-        lock (LogoBaseCache)
-        {
-            LogoBaseCache[aumid] = result;
-        }
         return result;
+    }
+
+    /// <summary>マニフェストの BackgroundColor（#RRGGBB か色名。transparent は板なし）。</summary>
+    private static Color? ParseBackground(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Equals("transparent", StringComparison.OrdinalIgnoreCase)) return null;
+        try
+        {
+            return ColorConverter.ConvertFromString(value) is Color c ? c : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string? FirstPackageFullName(string familyName)

@@ -77,22 +77,82 @@ internal sealed class IconProvider
         return image;
     }
 
+    /// <summary>
+    /// シェルが返す 32bpp のビットマップを、透明度を保ったまま WPF の画像にする。
+    /// System.Drawing 経由（Image.FromHbitmap → LockBits）は形式変換で透明度を落とし、透明だった画素が不透明の黒になるので使わない。
+    /// GDI の GetDIBits で画素をそのまま取り出し、シェルの慣例どおり乗算済みアルファ（PBGRA）として扱う。
+    /// </summary>
     private static ImageSource? FromHBitmapWithAlpha(nint hbitmap)
     {
-        using var bitmap = System.Drawing.Image.FromHbitmap(hbitmap);
-        // FromHbitmap は 32bpp のアルファを落とすため、生ピクセルを直接読んで BGRA として扱う
-        var rect = new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height);
-        var data = bitmap.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        if (GetObject(hbitmap, Marshal.SizeOf<BITMAP>(), out BITMAP bm) == 0 || bm.bmWidth <= 0 || bm.bmHeight <= 0) return null;
+        int width = bm.bmWidth, height = bm.bmHeight, stride = width * 4;
+        var pixels = new byte[stride * height];
+
+        var info = new BITMAPINFOHEADER
+        {
+            biSize = (uint)Marshal.SizeOf<BITMAPINFOHEADER>(),
+            biWidth = width,
+            biHeight = -height, // 上から下の並びで受け取る
+            biPlanes = 1,
+            biBitCount = 32,
+            biCompression = 0, // BI_RGB
+        };
+        nint hdc = CreateCompatibleDC(0);
         try
         {
-            var source = BitmapSource.Create(bitmap.Width, bitmap.Height, 96, 96, PixelFormats.Bgra32, null, data.Scan0, data.Stride * bitmap.Height, data.Stride);
-            source.Freeze();
-            return source;
+            var handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+            try
+            {
+                if (GetDIBits(hdc, hbitmap, 0, (uint)height, handle.AddrOfPinnedObject(), ref info, 0 /* DIB_RGB_COLORS */) == 0) return null;
+            }
+            finally
+            {
+                handle.Free();
+            }
         }
         finally
         {
-            bitmap.UnlockBits(data);
+            DeleteDC(hdc);
         }
+
+        // 透明度を持たない古い形式（アルファが全画素 0）は不透明として扱う
+        bool anyAlpha = false;
+        for (int i = 3; i < pixels.Length; i += 4)
+        {
+            if (pixels[i] != 0) { anyAlpha = true; break; }
+        }
+        if (!anyAlpha)
+        {
+            for (int i = 3; i < pixels.Length; i += 4) pixels[i] = 255;
+        }
+
+        var source = BitmapSource.Create(width, height, 96, 96, PixelFormats.Pbgra32, null, pixels, stride);
+        source.Freeze();
+        return source;
+    }
+
+    [DllImport("gdi32.dll")] private static extern int GetObject(nint hgdiobj, int cbBuffer, out BITMAP lpvObject);
+    [DllImport("gdi32.dll")] private static extern nint CreateCompatibleDC(nint hdc);
+    [DllImport("gdi32.dll")] private static extern bool DeleteDC(nint hdc);
+    [DllImport("gdi32.dll")] private static extern int GetDIBits(nint hdc, nint hbm, uint start, uint lines, nint bits, ref BITMAPINFOHEADER bmi, uint usage);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BITMAP
+    {
+        public int bmType, bmWidth, bmHeight, bmWidthBytes;
+        public ushort bmPlanes, bmBitsPixel;
+        public nint bmBits;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BITMAPINFOHEADER
+    {
+        public uint biSize;
+        public int biWidth, biHeight;
+        public ushort biPlanes, biBitCount;
+        public uint biCompression, biSizeImage;
+        public int biXPelsPerMeter, biYPelsPerMeter;
+        public uint biClrUsed, biClrImportant;
     }
 
     private static ImageSource? FromWindow(nint hwnd)

@@ -33,13 +33,14 @@ public partial class App : Application
         if (e.Args.Length == 1 && e.Args[0] == "--list-pinned")
         {
             var apps = PinnedAppReader.ReadAll();
+            var icons = new IconProvider();
             Diagnostics.Log($"ListPinned: {apps.Count} apps");
             for (int i = 0; i < apps.Count; i++)
             {
                 var a = apps[i];
                 string logo = a.AppUserModelId is null ? "-" :
                     $"dark={PackagedAppLogo.ResolveFile(a.AppUserModelId, 32, Core.LogoBackdrop.Dark) ?? "(shell)"} light={PackagedAppLogo.ResolveFile(a.AppUserModelId, 32, Core.LogoBackdrop.Light) ?? "(shell)"}";
-                Diagnostics.Log($"  {i + 1,2}. {a.Name} | id={a.Id} | exe={a.TargetExecutablePath ?? "-"} | aumid={a.AppUserModelId ?? "-"} | logo: {logo}");
+                Diagnostics.Log($"  {i + 1,2}. {a.Name} | id={a.Id} | exe={a.TargetExecutablePath ?? "-"} | aumid={a.AppUserModelId ?? "-"} | icon: {DescribeTransparency(icons.ForPinnedApp(a, 32))} | logo: {logo}");
             }
             Shutdown();
             return;
@@ -101,6 +102,23 @@ public partial class App : Application
         _messageWindow = new MessageWindow();
         _controller = new PaletteController(Dispatcher, new StateStore(), _messageWindow, showMessage);
         _controller.Start();
+    }
+
+    /// <summary>診断用: 画像の透明画素の割合。透過が落ちて黒塗りになっていないかを確認する。</summary>
+    private static string DescribeTransparency(System.Windows.Media.ImageSource? image)
+    {
+        if (image is not System.Windows.Media.Imaging.BitmapSource source) return "(none)";
+        var converted = new System.Windows.Media.Imaging.FormatConvertedBitmap(source, System.Windows.Media.PixelFormats.Bgra32, null, 0);
+        int w = converted.PixelWidth, h = converted.PixelHeight, stride = w * 4;
+        var pixels = new byte[stride * h];
+        converted.CopyPixels(pixels, stride, 0);
+        int transparent = 0, opaqueBlack = 0;
+        for (int i = 0; i < pixels.Length; i += 4)
+        {
+            if (pixels[i + 3] < 255) transparent++;
+            else if (pixels[i] < 16 && pixels[i + 1] < 16 && pixels[i + 2] < 16) opaqueBlack++;
+        }
+        return $"{w}x{h} transparent={transparent} opaqueBlack={opaqueBlack}";
     }
 
     /// <summary>
