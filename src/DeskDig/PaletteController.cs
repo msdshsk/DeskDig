@@ -25,9 +25,14 @@ internal sealed class PaletteController : IDisposable
     private readonly MessageWindow _messageWindow;
     private readonly uint _showMessage;
     private readonly OutsideClickMonitor _outsideClicks = new();
+    private readonly SidePanelViewModel _sidePanelViewModel = new();
     private PaletteWindow? _window;
+    private SidePanelWindow? _sidePanel;
     private SettingsWindow? _settingsWindow;
     private TrayIcon? _tray;
+    private AudioDeviceService? _audio;
+    private bool _audioRefreshQueued;
+    private string? _lastGpu;
     private DateTime _lastOutsideClose = DateTime.MinValue;
     private IReadOnlyList<PinnedApp> _pinnedApps = [];
 
@@ -153,6 +158,7 @@ internal sealed class PaletteController : IDisposable
 
         var excluded = new HashSet<nint>();
         if (_window.Handle != 0) excluded.Add(_window.Handle);
+        if (_sidePanel is { Handle: not 0 }) excluded.Add(_sidePanel.Handle);
         if (_settingsWindow is not null) excluded.Add(new System.Windows.Interop.WindowInteropHelper(_settingsWindow).Handle);
 
         var entries = _enumerator.Enumerate(excluded);
@@ -166,10 +172,10 @@ internal sealed class PaletteController : IDisposable
         _pinnedApps = LoadPinnedApps();
         var apps = _pinnedApps.Select(a => new PinnedAppItem(a, _icons.ForPinnedApp(a, 32))).ToList();
 
-        var shortcuts = SettingsShortcutCatalog.Enabled(Settings).Select(s => new SettingsShortcutItem(s)).ToList();
-
-        _window.ViewModel.Load(items, arranged, apps, shortcuts);
+        _window.ViewModel.Load(items, arranged, apps);
         _window.ShowAt(anchor);
+        // AlwaysShown なら ToolsPanel も同時に開く。そうでなければ閉じた状態から始まる
+        if (Settings.AlwaysShown) OpenSidePanel(SidePanelKind.Tools);
         _outsideClicks.Arm();
         Diagnostics.Log($"Palette shown at ({anchor.X},{anchor.Y}) in {sw.ElapsedMilliseconds} ms ({entries.Count} windows, {apps.Count} pinned apps)");
     }
@@ -180,7 +186,196 @@ internal sealed class PaletteController : IDisposable
         Diagnostics.Log($"Palette hidden ({reason})");
         if (reason == PaletteCloseReason.OutsideClick) _lastOutsideClose = DateTime.UtcNow;
         _outsideClicks.Disarm();
+        CloseSidePanel(); // Palette を閉じると SidePanel も閉じる
         _window.HidePalette();
+    }
+
+    // ---- SidePanel（ToolsPanel / InfoPanel）----
+
+    public bool IsSidePanelOpen => _sidePanel is { IsVisible: true };
+
+    /// <summary>同じ種類なら閉じ、違う種類なら切り替える。</summary>
+    public void ToggleSidePanel(SidePanelKind kind)
+    {
+        if (IsSidePanelOpen && _sidePanelViewModel.Kind == kind) CloseSidePanel();
+        else OpenSidePanel(kind);
+    }
+
+    public void OpenSidePanel(SidePanelKind kind)
+    {
+        if (_window is not { IsVisible: true } || kind == SidePanelKind.None) return;
+        _sidePanel ??= new SidePanelWindow(this, _sidePanelViewModel, _window);
+        _sidePanelViewModel.Kind = kind;
+        if (kind == SidePanelKind.Tools)
+        {
+            _sidePanel.Sync(() => _sidePanelViewModel.AlwaysShown = Settings.AlwaysShown);
+            _sidePanelViewModel.ShowSoundFallback = false;
+            RefreshAudio();
+        }
+        else
+        {
+            LoadSystemSummary();
+            _sidePanelViewModel.HotkeyText = Settings.HotkeyEnabled ? Settings.Hotkey : $"{Settings.Hotkey}（無効）";
+            _sidePanelViewModel.TriggerText =
+                $"DesktopDoubleClick: {(Settings.DesktopDoubleClickEnabled ? "有効" : "無効")}\nHotkey: {(Settings.HotkeyEnabled ? "有効" : "無効")}";
+        }
+        _sidePanel.ShowBeside(_window.Handle);
+        _window.ViewModel.SidePanel = kind;
+        Diagnostics.Log($"SidePanel opened ({kind})");
+    }
+
+    public void CloseSidePanel()
+    {
+        if (!IsSidePanelOpen) return;
+        _sidePanel!.HidePanel();
+        _sidePanelViewModel.Kind = SidePanelKind.None;
+        if (_window is not null) _window.ViewModel.SidePanel = SidePanelKind.None;
+    }
+
+    /// <summary>ToolsPanel のピン型ボタン。設定として保存し、設定画面の行とも同じ値になる。</summary>
+    public void SetAlwaysShown(bool value)
+    {
+        if (Settings.AlwaysShown == value) return;
+        Settings.AlwaysShown = value;
+        _store.SaveSettings(Settings);
+        Diagnostics.Log($"AlwaysShown = {value}");
+    }
+
+    // ---- AudioControl ----
+
+    private AudioDeviceService? Audio
+    {
+        get
+        {
+            if (_audio is not null) return _audio;
+            try
+            {
+                _audio = new AudioDeviceService();
+                _audio.DevicesChanged += OnAudioDevicesChanged;
+            }
+            catch (Exception ex)
+            {
+                Diagnostics.Log("AudioDeviceService init failed", ex);
+            }
+            return _audio;
+        }
+    }
+
+    /// <summary>COM のワーカースレッドから来る。UI スレッドへ渡し、連続する通知は 1 回の更新にまとめる。</summary>
+    private void OnAudioDevicesChanged()
+    {
+        if (_audioRefreshQueued) return;
+        _audioRefreshQueued = true;
+        _dispatcher.BeginInvoke(() =>
+        {
+            _audioRefreshQueued = false;
+            if (IsSidePanelOpen && _sidePanelViewModel.Kind == SidePanelKind.Tools) RefreshAudio();
+        });
+    }
+
+    private void RefreshAudio()
+    {
+        if (_sidePanel is null) return;
+        var audio = Audio;
+        IReadOnlyList<(string, string, bool)> devices = [];
+        AudioVolumeState? volume = null;
+        if (audio is not null)
+        {
+            try
+            {
+                devices = audio.GetOutputDevices().Select(d => (d.Id, d.Name, d.IsDefault)).ToList();
+                volume = audio.GetDefaultVolume();
+            }
+            catch (Exception ex)
+            {
+                Diagnostics.Log("Audio refresh failed", ex);
+            }
+        }
+        _sidePanel.Sync(() => _sidePanelViewModel.SetAudioState(devices, volume is null ? null : volume.Level * 100.0, volume?.IsMuted));
+    }
+
+    /// <summary>既定の出力デバイスを切り替える。Palette は閉じない。失敗したら通知し、ms-settings:sound への退避を出す。</summary>
+    public void SetDefaultAudioDevice(string deviceId)
+    {
+        try
+        {
+            Audio?.SetDefaultDevice(deviceId);
+            Diagnostics.Log($"Default audio device set to {deviceId}");
+            RefreshAudio();
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Log("Default audio device switch failed", ex);
+            _sidePanelViewModel.ShowSoundFallback = true;
+            _tray?.ShowBalloon("DeskDig", "出力デバイスの切替に失敗しました。Windows のサウンド設定から切り替えてください。");
+        }
+    }
+
+    public void SetAudioVolume(double level)
+    {
+        try
+        {
+            Audio?.SetDefaultVolume((float)level);
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Log("Volume change failed", ex);
+        }
+    }
+
+    public void SetAudioMuted(bool muted)
+    {
+        try
+        {
+            Audio?.SetDefaultMuted(muted);
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Log("Mute change failed", ex);
+        }
+    }
+
+    /// <summary>既定の切替に失敗したときの退避。OS のサウンド設定を開き、Palette を閉じる。</summary>
+    public void OpenSoundSettingsFallback()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo("ms-settings:sound") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Log("ms-settings:sound failed", ex);
+        }
+        HidePalette(PaletteCloseReason.Launched);
+    }
+
+    // ---- SystemSummary ----
+
+    /// <summary>即時に取れる項目を先に出し、GPU はバックグラウンドで取得して後から埋める。</summary>
+    private void LoadSystemSummary()
+    {
+        var quick = SystemSummaryReader.ReadQuick() with { Gpu = _lastGpu };
+        _sidePanelViewModel.Summary = quick;
+        Task.Run(SystemSummaryReader.ReadGpu).ContinueWith(t =>
+        {
+            _lastGpu = t.IsCompletedSuccessfully ? t.Result : SystemSummary.Unknown;
+            if (_sidePanelViewModel.Summary is { } current) _sidePanelViewModel.Summary = current.WithGpu(_lastGpu);
+        }, TaskScheduler.FromCurrentSynchronizationContext());
+    }
+
+    public void CopySystemSummary()
+    {
+        var summary = _sidePanelViewModel.Summary;
+        if (summary is null) return;
+        try
+        {
+            Clipboard.SetDataObject(summary.ToPlainText(), copy: true);
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Log("Clipboard copy failed", ex);
+            _tray?.ShowBalloon("DeskDig", "クリップボードへコピーできませんでした。");
+        }
     }
 
     // ---- Activate / Launcher ----
@@ -217,7 +412,7 @@ internal sealed class PaletteController : IDisposable
     {
         try
         {
-            Process.Start(new ProcessStartInfo(shortcut.Destination) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(shortcut.FileName, shortcut.Arguments ?? string.Empty) { UseShellExecute = true });
             Diagnostics.Log($"Opened settings shortcut {shortcut.Id} ({shortcut.Destination})");
         }
         catch (Exception ex)
@@ -292,9 +487,10 @@ internal sealed class PaletteController : IDisposable
         var arranged = PaletteOrder.Arrange(items.Select(i => i.Entry), Favorites, Recent);
         var apps = vm.LauncherItems.ToList();
         var filter = vm.FilterText;
-        var shortcuts = vm.AllShortcutItems.ToList();
-        vm.Load(items, arranged, _pinnedApps.Select(a => apps.FirstOrDefault(x => x.App.Id == a.Id) ?? new PinnedAppItem(a, _icons.ForPinnedApp(a, 32))), shortcuts);
+        var sidePanel = vm.SidePanel;
+        vm.Load(items, arranged, _pinnedApps.Select(a => apps.FirstOrDefault(x => x.App.Id == a.Id) ?? new PinnedAppItem(a, _icons.ForPinnedApp(a, 32))));
         vm.FilterText = filter;
+        vm.SidePanel = sidePanel;
     }
 
     private static IEnumerable<WindowEntryItem> AllLoadedItems(PaletteViewModel vm) => vm.VisibleEntryItems();
@@ -345,6 +541,15 @@ internal sealed class PaletteController : IDisposable
         StopTriggers();
         _outsideClicks.Dispose();
         _messageWindow.MessageReceived -= OnMessage;
+        if (_audio is not null)
+        {
+            _audio.DevicesChanged -= OnAudioDevicesChanged;
+            _audio.Dispose();
+            _audio = null;
+        }
+        _sidePanel?.HidePanel();
+        _sidePanel?.Close();
+        _sidePanel = null;
         _window?.HidePalette();
         _window?.Close();
         _window = null;

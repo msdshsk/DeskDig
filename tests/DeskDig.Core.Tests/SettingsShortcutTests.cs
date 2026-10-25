@@ -1,49 +1,50 @@
-using DeskDig.Core.Settings;
-
 namespace DeskDig.Core.Tests;
 
 public class SettingsShortcutTests
 {
     [Fact]
-    public void Defaults_show_about_sound_and_network_only()
+    public void Catalog_is_fixed_in_spec_order()
     {
-        var enabled = SettingsShortcutCatalog.Enabled(new PaletteSettings());
-
-        Assert.Equal(["about", "sound", "network"], enabled.Select(s => s.Id));
+        // spec §4.8 の表の順。設定による出し入れは無い
+        Assert.Equal(
+            ["environment", "sound-dialog", "network", "bluetooth", "display", "about"],
+            SettingsShortcutCatalog.All.Select(s => s.Id));
     }
 
     [Fact]
-    public void Enabling_a_candidate_in_settings_adds_it_in_catalog_order()
+    public void Destinations_follow_spec()
     {
-        var settings = new PaletteSettings { ShortcutWifi = true, ShortcutAbout = false };
+        var byId = SettingsShortcutCatalog.All.ToDictionary(s => s.Id);
 
-        var enabled = SettingsShortcutCatalog.Enabled(settings);
-
-        Assert.Equal(["sound", "network", "wifi"], enabled.Select(s => s.Id));
+        Assert.Equal("rundll32.exe", byId["environment"].FileName);
+        Assert.Equal("sysdm.cpl,EditEnvironmentVariables", byId["environment"].Arguments);
+        Assert.Equal("mmsys.cpl", byId["sound-dialog"].FileName);
+        Assert.Equal("ms-settings:network", byId["network"].FileName);
+        Assert.Equal("ms-settings:bluetooth", byId["bluetooth"].FileName);
+        Assert.Equal("ms-settings:display", byId["display"].FileName);
+        Assert.Equal("ms-settings:about", byId["about"].FileName);
     }
 
     [Fact]
-    public void Filter_matches_name_or_keyword_case_insensitively()
+    public void Destination_text_joins_file_name_and_arguments()
     {
-        // シナリオ 9: 「音量」と入力すると「サウンド」だけが残る
-        var all = SettingsShortcutCatalog.All;
-        var byVolume = all.Where(s => s.Matches(new EntryFilter("音量"))).Select(s => s.Id).ToList();
-        var byWifi = all.Where(s => s.Matches(new EntryFilter("WIFI"))).Select(s => s.Id).ToList();
+        var env = SettingsShortcutCatalog.All.Single(s => s.Id == "environment");
+        var about = SettingsShortcutCatalog.All.Single(s => s.Id == "about");
 
-        Assert.Equal(["sound"], byVolume);
-        Assert.Equal(["wifi"], byWifi);
-        Assert.Equal(all.Count, all.Count(s => s.Matches(EntryFilter.None)));
+        Assert.Equal("rundll32.exe sysdm.cpl,EditEnvironmentVariables", env.Destination);
+        Assert.Equal("ms-settings:about", about.Destination);
     }
 
     [Fact]
-    public void Every_candidate_has_destination_glyph_and_unique_id()
+    public void Every_candidate_has_name_glyph_and_unique_id()
     {
         var all = SettingsShortcutCatalog.All;
 
         Assert.Equal(all.Count, all.Select(s => s.Id).Distinct().Count());
         Assert.All(all, s =>
         {
-            Assert.False(string.IsNullOrWhiteSpace(s.Destination));
+            Assert.False(string.IsNullOrWhiteSpace(s.Name));
+            Assert.False(string.IsNullOrWhiteSpace(s.FileName));
             Assert.False(string.IsNullOrWhiteSpace(s.Glyph));
         });
     }

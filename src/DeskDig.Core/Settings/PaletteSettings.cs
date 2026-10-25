@@ -49,28 +49,9 @@ public sealed class PaletteSettings
     [Setting("Windows サインイン時に自動起動")]
     public bool AutoStart { get; set; }
 
-    // ---- SettingsShortcut（Windows の設定ページへの近道）。候補は SettingsShortcutCatalog で定義 ----
-
-    [Setting("近道: バージョン情報", Description = "ms-settings:about")]
-    public bool ShortcutAbout { get; set; } = true;
-
-    [Setting("近道: サウンド", Description = "ms-settings:sound")]
-    public bool ShortcutSound { get; set; } = true;
-
-    [Setting("近道: ネットワークとインターネット", Description = "ms-settings:network")]
-    public bool ShortcutNetwork { get; set; } = true;
-
-    [Setting("近道: Wi-Fi", Description = "ms-settings:network-wifi")]
-    public bool ShortcutWifi { get; set; }
-
-    [Setting("近道: ディスプレイ", Description = "ms-settings:display")]
-    public bool ShortcutDisplay { get; set; }
-
-    [Setting("近道: Bluetooth とデバイス", Description = "ms-settings:bluetooth")]
-    public bool ShortcutBluetooth { get; set; }
-
-    [Setting("近道: サウンド（従来のダイアログ）", Description = "再生・録音デバイスの既定を切り替える旧ダイアログ（mmsys.cpl）")]
-    public bool ShortcutSoundDialog { get; set; }
+    /// <summary>ToolsPanel を Palette と同時に毎回開く（AlwaysShown）。ToolsPanel 上のピン型ボタンと連動する。</summary>
+    [Setting("ToolsPanel を Palette と同時に開く", Description = "AlwaysShown。ToolsPanel 上のピン型ボタンと同じ設定")]
+    public bool AlwaysShown { get; set; }
 
     public PaletteSettings Clone() => (PaletteSettings)MemberwiseClone();
 }

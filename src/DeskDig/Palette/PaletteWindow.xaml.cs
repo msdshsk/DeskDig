@@ -127,6 +127,9 @@ public partial class PaletteWindow : Window
     private void OnDeactivated(object? sender, EventArgs e)
     {
         if (_suppressDeactivate || !IsVisible) return;
+        // SidePanel など自プロセスのウインドウへ移っただけなら「外」ではない
+        GetWindowThreadProcessId(GetForegroundWindow(), out uint processId);
+        if (processId == (uint)Environment.ProcessId) return;
         _controller.HidePalette(PaletteCloseReason.OutsideClick);
     }
 
@@ -135,7 +138,9 @@ public partial class PaletteWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                _controller.HidePalette(PaletteCloseReason.Escape);
+                // 二段階: SidePanel が開いていればそれだけを閉じ、次の Esc で Palette を閉じる
+                if (_controller.IsSidePanelOpen) _controller.CloseSidePanel();
+                else _controller.HidePalette(PaletteCloseReason.Escape);
                 e.Handled = true;
                 break;
             case Key.Enter:
@@ -280,23 +285,11 @@ public partial class PaletteWindow : Window
         }
     }
 
-    // ---- SettingsShortcut ----
+    // ---- SidePanel ----
 
-    private static SettingsShortcutItem? ShortcutOf(object sender) => (sender as FrameworkElement)?.DataContext as SettingsShortcutItem;
+    private void ToolsPanelToggle_Click(object sender, RoutedEventArgs e) => _controller.ToggleSidePanel(SidePanelKind.Tools);
 
-    private void Shortcut_MouseEnter(object sender, MouseEventArgs e)
-    {
-        if (ShortcutOf(sender) is { } item) _viewModel.SelectShortcut(item);
-    }
-
-    private void Shortcut_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-    {
-        if (ShortcutOf(sender) is { } item)
-        {
-            _controller.OpenSettingsShortcut(item.Shortcut);
-            e.Handled = true;
-        }
-    }
+    private void InfoPanelToggle_Click(object sender, RoutedEventArgs e) => _controller.ToggleSidePanel(SidePanelKind.Info);
 
     private void PinnedApp_DragOver(object sender, DragEventArgs e)
     {

@@ -98,9 +98,43 @@
             <StackPanel Orientation="Vertical" />
         </ItemsPanelTemplate>
 
+        <!-- 絞り込み行右端の SidePanel 開閉アイコン。Tag に「開いているか」を結び、開いている方を点灯させる -->
+        <Style x:Key="SidePanelToggle" TargetType="Button">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="Background" Value="#262A33" />
+            <Setter Property="BorderBrush" Value="#3A404C" />
+            <Setter Property="Foreground" Value="#9AA0AA" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#343A46" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#2F4A66" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#61AFEF" />
+                                <Setter Property="Foreground" Value="#E6E6E6" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- PinnedApp のセル。透過の上に黒で描かれたアイコンも見えるよう、Palette より一段明るい板を常時敷く -->
         <DataTemplate x:Key="PinnedAppTile" DataType="{x:Type local:PinnedAppItem}">
             <Border x:Name="Cell" Width="40" Height="40" Margin="2" CornerRadius="5"
-                    Background="Transparent" BorderThickness="2" BorderBrush="Transparent"
+                    Background="#2B2F38" BorderThickness="2" BorderBrush="Transparent"
                     ToolTip="{Binding Name}" Cursor="Hand" AllowDrop="True"
                     PreviewMouseLeftButtonDown="PinnedApp_PreviewMouseLeftButtonDown"
                     PreviewMouseMove="PinnedApp_PreviewMouseMove"
@@ -109,29 +143,6 @@
                     DragOver="PinnedApp_DragOver"
                     Drop="PinnedApp_Drop">
                 <Image Source="{Binding Icon}" Width="28" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
-            <DataTemplate.Triggers>
-                <Trigger SourceName="Cell" Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Cell" Property="Background" Value="#343A46" />
-                </Trigger>
-                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter TargetName="Cell" Property="BorderBrush" Value="#61AFEF" />
-                    <Setter TargetName="Cell" Property="Background" Value="#343A46" />
-                </DataTrigger>
-            </DataTemplate.Triggers>
-        </DataTemplate>
-        <!-- SettingsShortcut: PinnedApp と区別するため、画像アイコンではなく記号フォントの小さなセル -->
-        <DataTemplate x:Key="SettingsShortcutTile" DataType="{x:Type local:SettingsShortcutItem}">
-            <Border x:Name="Cell" Height="30" Margin="2" Padding="8,0" CornerRadius="5"
-                    Background="#262A33" BorderThickness="1" BorderBrush="#3A404C" Cursor="Hand"
-                    ToolTip="{Binding Name}"
-                    MouseLeftButtonUp="Shortcut_MouseLeftButtonUp"
-                    MouseEnter="Shortcut_MouseEnter">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Glyph}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14"
-                               Foreground="#9AA0AA" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding Name}" FontSize="12" Foreground="#C9CDD4" Margin="6,0,0,0" VerticalAlignment="Center" />
-                </StackPanel>
             </Border>
             <DataTemplate.Triggers>
                 <Trigger SourceName="Cell" Property="IsMouseOver" Value="True">
@@ -154,30 +165,36 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- 絞り込み -->
-            <Grid Grid.Row="0" Margin="4,4,4,6">
-                <!-- IME を無効化: 変換中に Palette が隠れると WPF の TextStore が FailFast する既知の不具合を避ける -->
-                <TextBox x:Name="FilterBox" Padding="8,6" FontSize="14"
-                         Background="#14161B" Foreground="#E6E6E6" BorderBrush="#3A404C" CaretBrush="#E6E6E6"
-                         InputMethod.IsInputMethodEnabled="False"
-                         Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#6C7380"
-                           Text="入力して絞り込み（アプリ名 / タイトル / PinnedApp）">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=FilterBox}" Value="">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Grid>
+            <!-- 絞り込み（右端に SidePanel の開閉アイコン: 操作 = ToolsPanel、歯車 = InfoPanel） -->
+            <DockPanel Grid.Row="0" Margin="4,4,4,6">
+                <Button DockPanel.Dock="Right" Style="{StaticResource SidePanelToggle}" Content="&#xE713;" ToolTip="InfoPanel（歯車）"
+                        Tag="{Binding IsInfoPanelOpen}" Click="InfoPanelToggle_Click" />
+                <Button DockPanel.Dock="Right" Style="{StaticResource SidePanelToggle}" Content="&#xE90F;" ToolTip="ToolsPanel（操作）"
+                        Tag="{Binding IsToolsPanelOpen}" Click="ToolsPanelToggle_Click" />
+                <Grid>
+                    <!-- IME を無効化: 変換中に Palette が隠れると WPF の TextStore が FailFast する既知の不具合を避ける -->
+                    <TextBox x:Name="FilterBox" Padding="8,6" FontSize="14"
+                             Background="#14161B" Foreground="#E6E6E6" BorderBrush="#3A404C" CaretBrush="#E6E6E6"
+                             InputMethod.IsInputMethodEnabled="False"
+                             Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#6C7380"
+                               Text="入力して絞り込み（アプリ名 / タイトル / PinnedApp）">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=FilterBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </DockPanel>
 
-            <!-- Launcher（PinnedApp の段と、その下の SettingsShortcut の段） -->
-            <StackPanel Grid.Row="1" Visibility="{Binding HasLauncherSection, Converter={StaticResource BoolToVis}}">
+            <!-- Launcher（PinnedApp の段） -->
+            <StackPanel Grid.Row="1" Visibility="{Binding HasLauncherItems, Converter={StaticResource BoolToVis}}">
                 <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl x:Name="LauncherList" ItemsSource="{Binding LauncherItems}" ItemTemplate="{StaticResource PinnedAppTile}" Margin="2,0">
                         <ItemsControl.ItemsPanel>
@@ -187,14 +204,6 @@
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
                 </ScrollViewer>
-                <ItemsControl x:Name="ShortcutList" ItemsSource="{Binding ShortcutItems}" ItemTemplate="{StaticResource SettingsShortcutTile}" Margin="2,2,2,0"
-                              Visibility="{Binding HasShortcutItems, Converter={StaticResource BoolToVis}}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ItemsControl>
                 <TextBlock Margin="8,2,8,0" Height="18" Foreground="#9AA0AA" Text="{Binding SelectedPinnedAppName}" TextTrimming="CharacterEllipsis" />
             </StackPanel>
 

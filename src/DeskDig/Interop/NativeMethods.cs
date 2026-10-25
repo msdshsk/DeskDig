@@ -187,6 +187,7 @@ internal static partial class NativeMethods
     [DllImport("kernel32.dll")] public static extern bool CloseHandle(nint hObject);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern bool QueryFullProcessImageName(nint hProcess, uint dwFlags, StringBuilder lpExeName, ref uint lpdwSize);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern int GetApplicationUserModelId(nint hProcess, ref uint applicationUserModelIdLength, StringBuilder applicationUserModelId);
+    [DllImport("kernel32.dll")] public static extern bool GetPhysicallyInstalledSystemMemory(out long totalMemoryInKilobytes);
 
     [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(nint hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
     [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(nint hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute);
