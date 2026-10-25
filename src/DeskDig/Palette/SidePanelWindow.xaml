@@ -5,15 +5,16 @@
         Title="DeskDig SidePanel"
         WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
         ShowActivated="False" WindowStartupLocation="Manual"
-        Background="#1F2229" Foreground="#E6E6E6" FontSize="13"
+        Background="{DynamicResource Theme.Background}" Foreground="{DynamicResource Theme.Text}" FontSize="13"
         Width="320" Height="680"
         UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <!-- 色は直書きせず、Themes/Dark.xaml・Light.xaml の役割名キーを DynamicResource で参照する（§4.10） -->
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
 
         <Style x:Key="SectionLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#9AA0AA" />
+            <Setter Property="Foreground" Value="{DynamicResource Theme.TextMuted}" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="Margin" Value="4,10,4,4" />
         </Style>
@@ -23,12 +24,12 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
-        <!-- 暗色の平らなボタン。マウス前提なのでフォーカス枠は出さない -->
+        <!-- 平らなボタン。マウス前提なのでフォーカス枠は出さない -->
         <Style x:Key="FlatButton" TargetType="ButtonBase">
-            <Setter Property="Background" Value="#262A33" />
-            <Setter Property="BorderBrush" Value="#3A404C" />
+            <Setter Property="Background" Value="{DynamicResource Theme.Control}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Border}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Foreground" Value="#C9CDD4" />
+            <Setter Property="Foreground" Value="{DynamicResource Theme.TextSecondary}" />
             <Setter Property="Padding" Value="8,5" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Focusable" Value="False" />
@@ -42,10 +43,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#343A46" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Theme.SurfaceHover}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#3D4452" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Theme.SurfacePressed}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45" />
@@ -58,9 +59,9 @@
         <Style x:Key="FlatToggle" TargetType="ToggleButton" BasedOn="{StaticResource FlatButton}">
             <Style.Triggers>
                 <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Background" Value="#2F4A66" />
-                    <Setter Property="BorderBrush" Value="#61AFEF" />
-                    <Setter Property="Foreground" Value="#E6E6E6" />
+                    <Setter Property="Background" Value="{DynamicResource Theme.AccentSurface}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+                    <Setter Property="Foreground" Value="{DynamicResource Theme.Text}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -68,28 +69,28 @@
         <DataTemplate x:Key="ShortcutButton" DataType="{x:Type local:SettingsShortcutItem}">
             <Button Style="{StaticResource FlatButton}" Margin="2" ToolTip="{Binding Name}" Click="Shortcut_Click">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource Glyph}" Text="{Binding Glyph}" FontSize="14" Foreground="#9AA0AA" />
+                    <TextBlock Style="{StaticResource Glyph}" Text="{Binding Glyph}" FontSize="14" Foreground="{DynamicResource Theme.TextMuted}" />
                     <TextBlock Text="{Binding Name}" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
         </DataTemplate>
 
         <DataTemplate x:Key="DeviceRow" DataType="{x:Type local:AudioDeviceItem}">
-            <Border x:Name="Row" Margin="2,1" Padding="8,5" CornerRadius="5" Background="#262A33" BorderThickness="1" BorderBrush="Transparent"
+            <Border x:Name="Row" Margin="2,1" Padding="8,5" CornerRadius="5" Background="{DynamicResource Theme.Control}" BorderThickness="1" BorderBrush="Transparent"
                     Cursor="Hand" MouseLeftButtonUp="Device_MouseLeftButtonUp" ToolTip="{Binding Name}">
                 <DockPanel>
                     <TextBlock x:Name="Mark" DockPanel.Dock="Left" Style="{StaticResource Glyph}" Text="&#xE73E;" Width="18" FontSize="13"
-                               Foreground="#61AFEF" Visibility="{Binding IsDefault, Converter={StaticResource BoolToVis}}" />
+                               Foreground="{DynamicResource Theme.Accent}" Visibility="{Binding IsDefault, Converter={StaticResource BoolToVis}}" />
                     <TextBlock x:Name="Spacer" DockPanel.Dock="Left" Width="18" Visibility="{Binding IsDefault, Converter={StaticResource InverseBoolToVis}}" />
                     <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                 </DockPanel>
             </Border>
             <DataTemplate.Triggers>
                 <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Row" Property="Background" Value="#343A46" />
+                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource Theme.SurfaceHover}" />
                 </Trigger>
                 <DataTrigger Binding="{Binding IsDefault}" Value="True">
-                    <Setter TargetName="Row" Property="BorderBrush" Value="#3A5A7A" />
+                    <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource Theme.AccentBorderSoft}" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
@@ -100,13 +101,13 @@
                     <ColumnDefinition Width="76" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding Label}" Foreground="#9AA0AA" FontSize="12" VerticalAlignment="Top" />
+                <TextBlock Text="{Binding Label}" Foreground="{DynamicResource Theme.TextMuted}" FontSize="12" VerticalAlignment="Top" />
                 <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="12" TextWrapping="Wrap" />
             </Grid>
         </DataTemplate>
     </Window.Resources>
 
-    <Border BorderBrush="#3A404C" BorderThickness="1">
+    <Border BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1">
         <Grid Margin="8">
             <!-- ================= ToolsPanel ================= -->
             <DockPanel Visibility="{Binding IsTools, Converter={StaticResource BoolToVis}}">
@@ -125,7 +126,7 @@
                             </TextBlock.Text>
                         </TextBlock>
                     </ToggleButton>
-                    <TextBlock Text="ToolsPanel" Foreground="#9AA0AA" FontSize="11" VerticalAlignment="Center" />
+                    <TextBlock Text="ToolsPanel" Foreground="{DynamicResource Theme.TextMuted}" FontSize="11" VerticalAlignment="Center" />
                 </DockPanel>
                 <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Shortcuts}" ItemTemplate="{StaticResource ShortcutButton}" Margin="2,6,2,0">
                     <ItemsControl.ItemsPanel>
@@ -134,14 +135,14 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
-                <Rectangle DockPanel.Dock="Top" Height="1" Fill="#3A404C" Margin="4,10,4,0" />
+                <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource Theme.Border}" Margin="4,10,4,0" />
 
                 <!-- 退避ボタン（下に固定。既定の切替に失敗したときだけ出る） -->
                 <Button DockPanel.Dock="Bottom" Style="{StaticResource FlatButton}" Margin="4,8,4,4" HorizontalContentAlignment="Center"
                         Click="SoundFallback_Click"
                         Visibility="{Binding ShowSoundFallback, Converter={StaticResource BoolToVis}}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE7BA;" Foreground="#E5C07B" FontSize="13" />
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE7BA;" Foreground="{DynamicResource Theme.Warning}" FontSize="13" />
                         <TextBlock Text="切替に失敗しました。サウンドの設定を開く" FontSize="12" Margin="6,0,0,0" />
                     </StackPanel>
                 </Button>
@@ -153,34 +154,34 @@
                         <StackPanel DataContext="{Binding Output}">
                             <TextBlock Style="{StaticResource SectionLabel}" Text="{Binding Title}" />
                             <ItemsControl ItemsSource="{Binding Devices}" ItemTemplate="{StaticResource DeviceRow}" />
-                            <TextBlock Margin="8,8" Foreground="#6C7380" HorizontalAlignment="Center" Text="{Binding EmptyText}"
+                            <TextBlock Margin="8,8" Foreground="{DynamicResource Theme.TextHint}" HorizontalAlignment="Center" Text="{Binding EmptyText}"
                                        Visibility="{Binding HasDevices, Converter={StaticResource InverseBoolToVis}}" />
                             <DockPanel Margin="4,6,4,0" IsEnabled="{Binding HasDefaultDevice}">
                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource FlatToggle}" Padding="7,5" Width="34" HorizontalContentAlignment="Center"
                                               IsChecked="{Binding IsMuted, Mode=TwoWay}" Checked="OutputMute_Changed" Unchecked="OutputMute_Changed" ToolTip="出力をミュート">
                                     <TextBlock Style="{StaticResource Glyph}" Text="{Binding MuteGlyph}" FontSize="14" />
                                 </ToggleButton>
-                                <TextBlock DockPanel.Dock="Right" Width="34" TextAlignment="Right" VerticalAlignment="Center" FontSize="12" Foreground="#9AA0AA"
+                                <TextBlock DockPanel.Dock="Right" Width="34" TextAlignment="Right" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource Theme.TextMuted}"
                                            Text="{Binding Volume, StringFormat={}{0:0}}" />
                                 <Slider Minimum="0" Maximum="100" Margin="8,0" VerticalAlignment="Center" IsMoveToPointEnabled="True" Focusable="False"
                                         Value="{Binding Volume, Mode=TwoWay}" ValueChanged="OutputVolume_ValueChanged" />
                             </DockPanel>
                         </StackPanel>
 
-                        <Rectangle Height="1" Fill="#3A404C" Margin="4,12,4,0" />
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Border}" Margin="4,12,4,0" />
 
                         <!-- 入力 -->
                         <StackPanel DataContext="{Binding Input}">
                             <TextBlock Style="{StaticResource SectionLabel}" Text="{Binding Title}" />
                             <ItemsControl ItemsSource="{Binding Devices}" ItemTemplate="{StaticResource DeviceRow}" />
-                            <TextBlock Margin="8,8" Foreground="#6C7380" HorizontalAlignment="Center" Text="{Binding EmptyText}"
+                            <TextBlock Margin="8,8" Foreground="{DynamicResource Theme.TextHint}" HorizontalAlignment="Center" Text="{Binding EmptyText}"
                                        Visibility="{Binding HasDevices, Converter={StaticResource InverseBoolToVis}}" />
                             <DockPanel Margin="4,6,4,0" IsEnabled="{Binding HasDefaultDevice}">
                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource FlatToggle}" Padding="7,5" Width="34" HorizontalContentAlignment="Center"
                                               IsChecked="{Binding IsMuted, Mode=TwoWay}" Checked="InputMute_Changed" Unchecked="InputMute_Changed" ToolTip="マイクをミュート">
                                     <TextBlock Style="{StaticResource Glyph}" Text="{Binding MuteGlyph}" FontSize="14" />
                                 </ToggleButton>
-                                <TextBlock DockPanel.Dock="Right" Width="34" TextAlignment="Right" VerticalAlignment="Center" FontSize="12" Foreground="#9AA0AA"
+                                <TextBlock DockPanel.Dock="Right" Width="34" TextAlignment="Right" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource Theme.TextMuted}"
                                            Text="{Binding Volume, StringFormat={}{0:0}}" />
                                 <Slider Minimum="0" Maximum="100" Margin="8,0" VerticalAlignment="Center" IsMoveToPointEnabled="True" Focusable="False"
                                         Value="{Binding Volume, Mode=TwoWay}" ValueChanged="InputVolume_ValueChanged" />
@@ -192,7 +193,7 @@
 
             <!-- ================= InfoPanel ================= -->
             <DockPanel Visibility="{Binding IsInfo, Converter={StaticResource BoolToVis}}">
-                <TextBlock DockPanel.Dock="Top" Text="InfoPanel" Foreground="#9AA0AA" FontSize="11" Margin="4,4,4,0" />
+                <TextBlock DockPanel.Dock="Top" Text="InfoPanel" Foreground="{DynamicResource Theme.TextMuted}" FontSize="11" Margin="4,4,4,0" />
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
                         <!-- SystemSummary -->
@@ -207,7 +208,7 @@
                         </DockPanel>
                         <ItemsControl ItemsSource="{Binding SummaryLines}" ItemTemplate="{StaticResource SummaryRow}" Margin="0,6,0,0" />
 
-                        <Rectangle Height="1" Fill="#3A404C" Margin="4,12,4,0" />
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Border}" Margin="4,12,4,0" />
 
                         <!-- DeskDig の設定 -->
                         <TextBlock Style="{StaticResource SectionLabel}" Text="DeskDig の設定" />
@@ -219,11 +220,19 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <TextBlock Text="ホットキー" Foreground="#9AA0AA" FontSize="12" />
+                            <TextBlock Text="ホットキー" Foreground="{DynamicResource Theme.TextMuted}" FontSize="12" />
                             <TextBlock Grid.Column="1" Text="{Binding HotkeyText}" FontSize="12" />
-                            <TextBlock Grid.Row="1" Text="Trigger" Foreground="#9AA0AA" FontSize="12" Margin="0,4,0,0" />
+                            <TextBlock Grid.Row="1" Text="Trigger" Foreground="{DynamicResource Theme.TextMuted}" FontSize="12" Margin="0,4,0,0" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TriggerText}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+                            <!-- Theme（§4.10）。選ぶと即時に反映し、設定として保存する。設定画面の「テーマ」と同じ値 -->
+                            <TextBlock Grid.Row="2" Text="テーマ" Foreground="{DynamicResource Theme.TextMuted}" FontSize="12" Margin="0,10,0,0" VerticalAlignment="Center" />
+                            <ComboBox Grid.Row="2" Grid.Column="1" FontSize="12" Width="150" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                      ItemsSource="{Binding ThemeOptions}" SelectedValuePath="Value" DisplayMemberPath="Label"
+                                      SelectedValue="{Binding Theme, Mode=TwoWay}" SelectionChanged="Theme_SelectionChanged"
+                                      ToolTip="Dark / Light / System（Windows のアプリモードに追従）" />
                         </Grid>
                         <Button Style="{StaticResource FlatButton}" Margin="4,10,4,0" HorizontalContentAlignment="Center" Click="OpenSettings_Click">
                             <StackPanel Orientation="Horizontal">
@@ -231,19 +240,6 @@
                                 <TextBlock Text="設定画面を開く" FontSize="12" Margin="6,0,0,0" />
                             </StackPanel>
                         </Button>
-
-                        <!-- テーマ切替の予定地（§7）。実装までは無効 -->
-                        <Grid Margin="4,12,4,0" IsEnabled="False" Opacity="0.45" ToolTip="テーマの切替は今後の予定です">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="76" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="テーマ" Foreground="#9AA0AA" FontSize="12" VerticalAlignment="Center" />
-                            <ComboBox Grid.Column="1" SelectedIndex="0" FontSize="12" Width="120" HorizontalAlignment="Left">
-                                <ComboBoxItem Content="Dark" />
-                                <ComboBoxItem Content="Light" />
-                            </ComboBox>
-                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>

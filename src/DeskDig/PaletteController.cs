@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Threading;
 using DeskDig.Core;
@@ -7,6 +8,7 @@ using DeskDig.Interop;
 using DeskDig.Palette;
 using DeskDig.Persistence;
 using DeskDig.Settings;
+using DeskDig.Theming;
 using DeskDig.Tray;
 using DeskDig.Triggers;
 
@@ -58,6 +60,8 @@ internal sealed class PaletteController : IDisposable
 
     public void Start()
     {
+        // ウインドウを作る前に Theme を適用し、最初の表示から設定どおりの配色にする
+        ThemeManager.Apply(Settings.Theme);
         _tray = new TrayIcon();
         _tray.OpenSettingsRequested += OpenSettings;
         _tray.ExitRequested += Exit;
@@ -98,6 +102,9 @@ internal sealed class PaletteController : IDisposable
     private void OnMessage(int msg, nint wParam, nint lParam)
     {
         if ((uint)msg == _showMessage) Toggle(MonitorQuery.CursorPosition());
+        // Windows の「色」（アプリモード）が変わると WM_SETTINGCHANGE("ImmersiveColorSet") が来る。Theme = System なら追従する
+        else if (msg == NativeMethods.WM_SETTINGCHANGE && lParam != 0 && Marshal.PtrToStringUni(lParam) == "ImmersiveColorSet")
+            ThemeManager.OnSystemAppModeChanged();
     }
 
     // ---- Trigger ----
@@ -215,6 +222,7 @@ internal sealed class PaletteController : IDisposable
         else
         {
             LoadSystemSummary();
+            _sidePanel.Sync(() => _sidePanelViewModel.Theme = Settings.Theme);
             _sidePanelViewModel.HotkeyText = Settings.HotkeyEnabled ? Settings.Hotkey : $"{Settings.Hotkey}（無効）";
             _sidePanelViewModel.TriggerText =
                 $"DesktopDoubleClick: {(Settings.DesktopDoubleClickEnabled ? "有効" : "無効")}\nHotkey: {(Settings.HotkeyEnabled ? "有効" : "無効")}";
@@ -239,6 +247,16 @@ internal sealed class PaletteController : IDisposable
         Settings.AlwaysShown = value;
         _store.SaveSettings(Settings);
         Diagnostics.Log($"AlwaysShown = {value}");
+    }
+
+    /// <summary>InfoPanel の Theme の選択。設定として保存し、開いているウインドウに即時に適用する。設定画面の行とも同じ値になる。</summary>
+    public void SetTheme(Theme value)
+    {
+        if (Settings.Theme == value) return;
+        Settings.Theme = value;
+        _store.SaveSettings(Settings);
+        ThemeManager.Apply(value);
+        Diagnostics.Log($"Theme = {value}");
     }
 
     // ---- AudioControl ----
@@ -528,6 +546,7 @@ internal sealed class PaletteController : IDisposable
         _store.SaveSettings(settings);
         _store.SavePlacementProfiles(profiles);
         _store.SaveFavorites(favorites);
+        ThemeManager.Apply(settings.Theme);
         try
         {
             AutoStartRegistration.Apply(settings.AutoStart);

@@ -3,7 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:DeskDig.Settings"
         Title="DeskDig 設定" Width="640" Height="720" MinWidth="520" MinHeight="400"
-        WindowStartupLocation="CenterScreen" FontSize="13">
+        WindowStartupLocation="CenterScreen" FontSize="13"
+        Background="{DynamicResource Theme.Background}" Foreground="{DynamicResource Theme.Text}">
+    <!-- 色は直書きせず、Themes/Dark.xaml・Light.xaml の役割名キーを DynamicResource で参照する（§4.10）。
+         TextBox / ComboBox / CheckBox / Button は Themes/Controls.xaml の暗黙スタイルで Theme に従う -->
     <Window.Resources>
         <!-- 型ごとの編集部品。設定項目の宣言から行を生成し、ここは項目追加では触らない -->
         <DataTemplate x:Key="BoolEditor" DataType="{x:Type local:SettingRow}">
@@ -16,7 +19,7 @@
             <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="220" />
         </DataTemplate>
         <DataTemplate x:Key="EnumEditor" DataType="{x:Type local:SettingRow}">
-            <ComboBox ItemsSource="{Binding Options}" SelectedValue="{Binding Value}" SelectedValuePath="Value" DisplayMemberPath="Label" Width="160" />
+            <ComboBox ItemsSource="{Binding Options}" SelectedValue="{Binding Value}" SelectedValuePath="Value" DisplayMemberPath="Label" Width="200" />
         </DataTemplate>
         <local:SettingEditorSelector x:Key="EditorSelector"
                                      Bool="{StaticResource BoolEditor}" Int="{StaticResource IntEditor}"
@@ -26,6 +29,16 @@
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Margin" Value="0,16,0,6" />
+        </Style>
+        <Style x:Key="Note" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Theme.TextMuted}" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+        <!-- 1 行 1 項目の区切り罫 -->
+        <Style x:Key="RowBorder" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Border}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="4,8" />
         </Style>
     </Window.Resources>
 
@@ -41,7 +54,7 @@
                 <ItemsControl ItemsSource="{Binding Rows}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type local:SettingRow}">
-                            <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="4,8">
+                            <Border Style="{StaticResource RowBorder}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -49,7 +62,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Label}" />
-                                        <TextBlock Text="{Binding Description}" Foreground="Gray" FontSize="11"
+                                        <TextBlock Style="{StaticResource Note}" Text="{Binding Description}"
                                                    Visibility="{Binding HasDescription, Converter={x:Static local:SettingsWindow.BoolToVisibility}}" />
                                     </StackPanel>
                                     <ContentControl Grid.Column="1" Content="{Binding}" ContentTemplateSelector="{StaticResource EditorSelector}" VerticalAlignment="Center" />
@@ -60,12 +73,12 @@
                 </ItemsControl>
 
                 <TextBlock Style="{StaticResource Heading}" Text="PlacementProfile" />
-                <TextBlock Foreground="Gray" FontSize="11" Margin="0,0,0,4"
+                <TextBlock Style="{StaticResource Note}" Margin="0,0,0,4"
                            Text="タイトル条件（部分一致）を追加できます。実行ファイルのみの規則とタイトル条件付きの規則が両方一致する場合はタイトル条件付きが優先されます。" TextWrapping="Wrap" />
                 <ItemsControl ItemsSource="{Binding Profiles}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type local:PlacementProfileRow}">
-                            <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="4,8">
+                            <Border Style="{StaticResource RowBorder}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -74,7 +87,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="{Binding ExecutableName}" FontWeight="SemiBold" ToolTip="{Binding ExecutablePath}" />
-                                        <TextBlock Text="{Binding PlacementText}" Foreground="Gray" FontSize="11" />
+                                        <TextBlock Style="{StaticResource Note}" Text="{Binding PlacementText}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
                                         <TextBlock Text="タイトル条件:" VerticalAlignment="Center" Margin="0,0,6,0" />
@@ -86,14 +99,14 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Text="（記録された PlacementProfile はありません）" Foreground="Gray" Margin="4"
+                <TextBlock Text="（記録された PlacementProfile はありません）" Foreground="{DynamicResource Theme.TextMuted}" Margin="4"
                            Visibility="{Binding HasNoProfiles, Converter={x:Static local:SettingsWindow.BoolToVisibility}}" />
 
                 <TextBlock Style="{StaticResource Heading}" Text="Favorite" />
                 <ItemsControl ItemsSource="{Binding Favorites}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type local:FavoriteRow}">
-                            <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="4,8">
+                            <Border Style="{StaticResource RowBorder}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -106,7 +119,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Text="（Favorite はありません）" Foreground="Gray" Margin="4"
+                <TextBlock Text="（Favorite はありません）" Foreground="{DynamicResource Theme.TextMuted}" Margin="4"
                            Visibility="{Binding HasNoFavorites, Converter={x:Static local:SettingsWindow.BoolToVisibility}}" />
             </StackPanel>
         </ScrollViewer>

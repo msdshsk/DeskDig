@@ -3,10 +3,13 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using DeskDig.Core;
 using DeskDig.Core.Settings;
 using DeskDig.Palette;
+using DeskDig.Theming;
 using DeskDig.Triggers;
+using static DeskDig.Interop.NativeMethods;
 
 namespace DeskDig.Settings;
 
@@ -143,6 +146,18 @@ public partial class SettingsWindow : Window
         _viewModel = new SettingsViewModel(controller.Settings.Clone(), controller.PlacementProfiles, controller.Favorites);
         InitializeComponent();
         DataContext = _viewModel;
+        SourceInitialized += (_, _) => ApplyTitleBarTheme(ThemeManager.Effective);
+        ThemeManager.EffectiveChanged += ApplyTitleBarTheme;
+        Closed += (_, _) => ThemeManager.EffectiveChanged -= ApplyTitleBarTheme;
+    }
+
+    /// <summary>枠のあるウインドウなので、DWM のタイトルバーの暗色/明色も Theme に合わせる。</summary>
+    private void ApplyTitleBarTheme(Theme effective)
+    {
+        nint hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == 0) return;
+        int dark = effective == Theme.Dark ? 1 : 0;
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref dark, sizeof(int));
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)

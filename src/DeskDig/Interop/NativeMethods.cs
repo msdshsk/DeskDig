@@ -91,6 +91,7 @@ internal static partial class NativeMethods
 
     public const int DWMWA_CLOAKED = 14;
     public const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+    public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
     public const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
     public const int DWMWCP_ROUND = 2;
 
@@ -106,6 +107,7 @@ internal static partial class NativeMethods
     public const int WM_MBUTTONDOWN = 0x0207;
     public const int WM_XBUTTONDOWN = 0x020B;
     public const int WM_HOTKEY = 0x0312;
+    public const int WM_SETTINGCHANGE = 0x001A;
     public const int WM_GETICON = 0x007F;
     public const int WM_QUIT = 0x0012;
     public const int ICON_BIG = 1;

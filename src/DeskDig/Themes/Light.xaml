@@ -1,0 +1,36 @@
+<!--
+    Theme: Light。Dark.xaml と同じキー集合を持つこと（テストで検査する）。
+    文字と地のコントラスト、選択枠と警告色の識別性、PinnedApp の板と面の対比はテストで下限を保証する。
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 地 -->
+    <SolidColorBrush x:Key="Theme.Background" Color="#F0F2F5" />
+    <!-- 面 -->
+    <SolidColorBrush x:Key="Theme.Surface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Theme.SurfaceHover" Color="#E4E8EE" />
+    <SolidColorBrush x:Key="Theme.SurfacePressed" Color="#D6DBE3" />
+    <!-- 操作部品の面 -->
+    <SolidColorBrush x:Key="Theme.Control" Color="#F8F9FB" />
+    <!-- 罫線 -->
+    <SolidColorBrush x:Key="Theme.Border" Color="#C8CED8" />
+    <SolidColorBrush x:Key="Theme.BorderStrong" Color="#AEB6C2" />
+    <!-- 文字 -->
+    <SolidColorBrush x:Key="Theme.Text" Color="#1B1E24" />
+    <SolidColorBrush x:Key="Theme.TextSecondary" Color="#343A44" />
+    <SolidColorBrush x:Key="Theme.TextMuted" Color="#5B6370" />
+    <SolidColorBrush x:Key="Theme.TextHint" Color="#7A828F" />
+    <!-- 入力欄 -->
+    <SolidColorBrush x:Key="Theme.Input" Color="#FFFFFF" />
+    <!-- 強調 -->
+    <SolidColorBrush x:Key="Theme.Accent" Color="#1E6FD0" />
+    <SolidColorBrush x:Key="Theme.AccentSurface" Color="#D7E7FB" />
+    <SolidColorBrush x:Key="Theme.AccentBorderSoft" Color="#8DB6E8" />
+    <!-- 警告 -->
+    <SolidColorBrush x:Key="Theme.Warning" Color="#A8660A" />
+    <!-- PinnedApp のアイコン背景の板。Palette の面より一段暗く、白で描かれたアイコンも見えるようにする -->
+    <SolidColorBrush x:Key="Theme.IconPlate" Color="#D3D8E0" />
+    <SolidColorBrush x:Key="Theme.IconPlateHover" Color="#C4CAD4" />
+
+</ResourceDictionary>

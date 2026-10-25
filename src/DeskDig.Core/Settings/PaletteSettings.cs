@@ -53,6 +53,10 @@ public sealed class PaletteSettings
     [Setting("ToolsPanel を Palette と同時に開く", Description = "AlwaysShown。ToolsPanel 上のピン型ボタンと同じ設定")]
     public bool AlwaysShown { get; set; }
 
+    /// <summary>Theme。InfoPanel の選択と同じ設定。</summary>
+    [Setting("テーマ", Description = "System は Windows の「色」のアプリモードに追従。InfoPanel の選択と同じ設定")]
+    public Theme Theme { get; set; } = Theme.System;
+
     public PaletteSettings Clone() => (PaletteSettings)MemberwiseClone();
 }
 

@@ -1,9 +1,11 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using DeskDig.Core;
+using DeskDig.Core.Settings;
 using DeskDig.Interop;
 using static DeskDig.Interop.NativeMethods;
 
@@ -150,4 +152,11 @@ public partial class SidePanelWindow : Window
     private void CopySummary_Click(object sender, RoutedEventArgs e) => _controller.CopySystemSummary();
 
     private void OpenSettings_Click(object sender, RoutedEventArgs e) => _controller.OpenSettings();
+
+    /// <summary>Theme の選択。Controller 経由で設定に保存し、即時に適用する。設定から VM へ写している間は書き戻さない。</summary>
+    private void Theme_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncing || !IsLoaded) return;
+        if (sender is ComboBox { SelectedValue: Theme theme }) _controller.SetTheme(theme);
+    }
 }

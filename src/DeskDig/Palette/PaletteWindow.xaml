@@ -5,15 +5,16 @@
         Title="DeskDig"
         WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
         ShowActivated="False" WindowStartupLocation="Manual"
-        Background="#1F2229" Foreground="#E6E6E6" FontSize="13"
+        Background="{DynamicResource Theme.Background}" Foreground="{DynamicResource Theme.Text}" FontSize="13"
         Width="1016" Height="680"
         UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <!-- 色は直書きせず、Themes/Dark.xaml・Light.xaml の役割名キーを DynamicResource で参照する（§4.10） -->
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
 
         <Style x:Key="SectionLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#9AA0AA" />
+            <Setter Property="Foreground" Value="{DynamicResource Theme.TextMuted}" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="Margin" Value="8,10,8,2" />
         </Style>
@@ -28,7 +29,7 @@
         <!-- タイル格子 -->
         <DataTemplate x:Key="GridTile" DataType="{x:Type local:WindowEntryItem}">
             <Border x:Name="Tile" Width="240" Margin="4" Padding="6" CornerRadius="6"
-                    Background="#2B2F38" BorderThickness="2" BorderBrush="Transparent" Cursor="Hand"
+                    Background="{DynamicResource Theme.Surface}" BorderThickness="2" BorderBrush="Transparent" Cursor="Hand"
                     ContextMenu="{StaticResource EntryMenu}"
                     MouseLeftButtonUp="Entry_MouseLeftButtonUp"
                     MouseEnter="Entry_MouseEnter"
@@ -52,8 +53,8 @@
             </Border>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter TargetName="Tile" Property="BorderBrush" Value="#61AFEF" />
-                    <Setter TargetName="Tile" Property="Background" Value="#343A46" />
+                    <Setter TargetName="Tile" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+                    <Setter TargetName="Tile" Property="Background" Value="{DynamicResource Theme.SurfaceHover}" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
@@ -61,7 +62,7 @@
         <!-- 縦リスト -->
         <DataTemplate x:Key="ListRow" DataType="{x:Type local:WindowEntryItem}">
             <Border x:Name="Row" Margin="4,2" Padding="6" CornerRadius="6"
-                    Background="#2B2F38" BorderThickness="2" BorderBrush="Transparent" Cursor="Hand"
+                    Background="{DynamicResource Theme.Surface}" BorderThickness="2" BorderBrush="Transparent" Cursor="Hand"
                     ContextMenu="{StaticResource EntryMenu}"
                     MouseLeftButtonUp="Entry_MouseLeftButtonUp"
                     MouseEnter="Entry_MouseEnter"
@@ -85,8 +86,8 @@
             </Border>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter TargetName="Row" Property="BorderBrush" Value="#61AFEF" />
-                    <Setter TargetName="Row" Property="Background" Value="#343A46" />
+                    <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource Theme.SurfaceHover}" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
@@ -103,9 +104,9 @@
             <Setter Property="Width" Value="32" />
             <Setter Property="Height" Value="32" />
             <Setter Property="Margin" Value="4,0,0,0" />
-            <Setter Property="Background" Value="#262A33" />
-            <Setter Property="BorderBrush" Value="#3A404C" />
-            <Setter Property="Foreground" Value="#9AA0AA" />
+            <Setter Property="Background" Value="{DynamicResource Theme.Control}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Border}" />
+            <Setter Property="Foreground" Value="{DynamicResource Theme.TextMuted}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Focusable" Value="False" />
             <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
@@ -118,12 +119,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#343A46" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Theme.SurfaceHover}" />
                             </Trigger>
                             <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#2F4A66" />
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#61AFEF" />
-                                <Setter Property="Foreground" Value="#E6E6E6" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Theme.AccentSurface}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Theme.Text}" />
                             </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -131,10 +132,10 @@
             </Setter>
         </Style>
 
-        <!-- PinnedApp のセル。透過の上に黒で描かれたアイコンも見えるよう、Palette より一段明るい板を常時敷く -->
+        <!-- PinnedApp のセル。透過の上に黒や白で描かれたアイコンも見えるよう、Palette の面より一段強い対比の板（Theme.IconPlate）を常時敷く -->
         <DataTemplate x:Key="PinnedAppTile" DataType="{x:Type local:PinnedAppItem}">
             <Border x:Name="Cell" Width="40" Height="40" Margin="2" CornerRadius="5"
-                    Background="#2B2F38" BorderThickness="2" BorderBrush="Transparent"
+                    Background="{DynamicResource Theme.IconPlate}" BorderThickness="2" BorderBrush="Transparent"
                     ToolTip="{Binding Name}" Cursor="Hand" AllowDrop="True"
                     PreviewMouseLeftButtonDown="PinnedApp_PreviewMouseLeftButtonDown"
                     PreviewMouseMove="PinnedApp_PreviewMouseMove"
@@ -146,17 +147,17 @@
             </Border>
             <DataTemplate.Triggers>
                 <Trigger SourceName="Cell" Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Cell" Property="Background" Value="#343A46" />
+                    <Setter TargetName="Cell" Property="Background" Value="{DynamicResource Theme.IconPlateHover}" />
                 </Trigger>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter TargetName="Cell" Property="BorderBrush" Value="#61AFEF" />
-                    <Setter TargetName="Cell" Property="Background" Value="#343A46" />
+                    <Setter TargetName="Cell" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+                    <Setter TargetName="Cell" Property="Background" Value="{DynamicResource Theme.IconPlateHover}" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
     </Window.Resources>
 
-    <Border BorderBrush="#3A404C" BorderThickness="1">
+    <Border BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1">
         <Grid Margin="8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -174,10 +175,11 @@
                 <Grid>
                     <!-- IME を無効化: 変換中に Palette が隠れると WPF の TextStore が FailFast する既知の不具合を避ける -->
                     <TextBox x:Name="FilterBox" Padding="8,6" FontSize="14"
-                             Background="#14161B" Foreground="#E6E6E6" BorderBrush="#3A404C" CaretBrush="#E6E6E6"
+                             Background="{DynamicResource Theme.Input}" Foreground="{DynamicResource Theme.Text}"
+                             BorderBrush="{DynamicResource Theme.Border}" CaretBrush="{DynamicResource Theme.Text}"
                              InputMethod.IsInputMethodEnabled="False"
                              Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#6C7380"
+                    <TextBlock IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Theme.TextHint}"
                                Text="入力して絞り込み（アプリ名 / タイトル / PinnedApp）">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -204,10 +206,10 @@
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
                 </ScrollViewer>
-                <TextBlock Margin="8,2,8,0" Height="18" Foreground="#9AA0AA" Text="{Binding SelectedPinnedAppName}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Margin="8,2,8,0" Height="18" Foreground="{DynamicResource Theme.TextMuted}" Text="{Binding SelectedPinnedAppName}" TextTrimming="CharacterEllipsis" />
             </StackPanel>
 
-            <Rectangle Grid.Row="2" Height="1" Fill="#3A404C" Margin="4,6,4,0" />
+            <Rectangle Grid.Row="2" Height="1" Fill="{DynamicResource Theme.Border}" Margin="4,6,4,0" />
 
             <!-- WindowEntry 一覧 -->
             <ScrollViewer x:Name="EntryScroller" Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
@@ -221,12 +223,12 @@
                     <ItemsControl x:Name="CurrentList" ItemsSource="{Binding CurrentItems}" />
 
                     <StackPanel Visibility="{Binding HasOther, Converter={StaticResource BoolToVis}}">
-                        <Rectangle Height="1" Fill="#4A5160" Margin="8,12,8,0" />
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.BorderStrong}" Margin="8,12,8,0" />
                         <TextBlock Style="{StaticResource SectionLabel}" Text="他のデスクトップ" />
                     </StackPanel>
                     <ItemsControl x:Name="OtherList" ItemsSource="{Binding OtherItems}" />
 
-                    <TextBlock Margin="12,24" Foreground="#6C7380" HorizontalAlignment="Center" Text="一致するウインドウはありません"
+                    <TextBlock Margin="12,24" Foreground="{DynamicResource Theme.TextHint}" HorizontalAlignment="Center" Text="一致するウインドウはありません"
                                Visibility="{Binding HasAnyEntry, Converter={StaticResource InverseBoolToVis}}" />
                 </StackPanel>
             </ScrollViewer>

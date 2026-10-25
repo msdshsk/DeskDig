@@ -1,7 +1,19 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Reflection;
 using DeskDig.Core;
+using DeskDig.Core.Settings;
 
 namespace DeskDig.Palette;
+
+/// <summary>InfoPanel の Theme の選択肢 1 件。</summary>
+internal sealed record ThemeOption(Theme Value, string Label)
+{
+    public static IReadOnlyList<ThemeOption> All { get; } = Enum.GetValues<Theme>().Select(t => new ThemeOption(t, LabelOf(t))).ToList();
+
+    private static string LabelOf(Theme theme) =>
+        typeof(Theme).GetField(theme.ToString())?.GetCustomAttribute<DescriptionAttribute>()?.Description ?? theme.ToString();
+}
 
 /// <summary>SidePanel の種類。同時に開くのは一方だけ。</summary>
 internal enum SidePanelKind { None, Tools, Info }
@@ -67,6 +79,7 @@ internal sealed class SidePanelViewModel : ObservableObject
     private bool _showSoundFallback;
     private string _hotkeyText = string.Empty;
     private string _triggerText = string.Empty;
+    private Theme _theme = Theme.System;
     private SystemSummary? _summary;
 
     public SidePanelViewModel()
@@ -126,4 +139,10 @@ internal sealed class SidePanelViewModel : ObservableObject
 
     public string HotkeyText { get => _hotkeyText; set => Set(ref _hotkeyText, value); }
     public string TriggerText { get => _triggerText; set => Set(ref _triggerText, value); }
+
+    /// <summary>Theme の選択肢（Dark / Light / System）。</summary>
+    public IReadOnlyList<ThemeOption> ThemeOptions => ThemeOption.All;
+
+    /// <summary>Theme。ComboBox と双方向に結び、変更は Controller が設定へ保存して即時に適用する。</summary>
+    public Theme Theme { get => _theme; set => Set(ref _theme, value); }
 }
