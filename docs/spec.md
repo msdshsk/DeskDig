@@ -90,30 +90,40 @@
 ### 4.7 Launcher / PinnedApp
 
 - **取得元**: タスクバーが保持する固定一覧（レジストリ値）を読み、従来型アプリもパッケージ型（MSIX / ストア）アプリもタスクバーの表示順で得る。読めない場合は固定フォルダのショートカットを予備として使う。このツール独自のアプリ登録機能は持たない（ADR-0003）。
-- **件数の想定**: 40〜50 件。Palette 上段に小さなアイコンのみを折り返して並べる（複数行）。アプリ名はホバーまたはキーボード選択時に表示する。
+- **件数の想定**: 40〜50 件。Palette 上段に小さなアイコンのみを折り返して並べる（複数行）。アプリ名はホバーまたはキーボード選択時に表示する。各アイコンの背景には Palette 本体より一段明るい小さな板を敷き、透過の上に黒で描かれたアイコンも見えるようにする。
 - **並び順**: 既定はタスクバーと同じ順。設定で「自分で並べ替える」を選ぶと、Palette 内でドラッグして並べ替えた順を独自に保存し、新たに固定されたものは末尾に追加、固定解除されたものは除去する。
 - **更新のタイミング**: Palette を開くたびに読み直す。固定・解除・並べ替えは次に開いたときに反映される。
 - **起動/振り替え**: PinnedApp に対応する WindowEntry が 1 件以上あれば、§4.3 の並び順で最上位の 1 件を Activate する。無ければ起動する。
 - 文字入力による絞り込みは PinnedApp にも効く。
 
-### 4.8 SettingsShortcut
+### 4.8 SidePanel（ToolsPanel / InfoPanel）
 
-- **目的**: 階層が深いわりに頻繁に開く Windows の設定ページへ、Palette からマウス操作ひとつで移動する。
-- **候補と既定**: 候補は固定の一覧として持ち、設定画面のチェックで表示するものを選ぶ。任意の URI を登録する機能は持たない。
+- **目的**: 頻度が低い操作や情報を Palette 本体（探して選ぶ面）から分離し、横に同じ高さで開く補助面に置く。Palette の位置は動かさない。
+- **開閉**:
+  - 絞り込み行の右端に「操作」アイコンと「歯車」アイコンを置く。操作で ToolsPanel、歯車で InfoPanel を開く。同時に開くのは一方だけで、もう一方のアイコンを押すと切り替わる。同じアイコンをもう一度押すと閉じる。
+  - SidePanel は Palette の右に出す。右に収まらない場合は左に出す。
+  - Esc は SidePanel が開いていればそれだけを閉じ、次の Esc で Palette を閉じる。Palette の外をクリックしたときは両方閉じる。SidePanel の内側は「外」ではない。
+  - Palette を閉じると SidePanel も閉じる。
+- **AlwaysShown**: ToolsPanel の上部にピン型のトグルボタンを置く。オンにすると、以後 Palette を開くたびに ToolsPanel も同時に開く。オフなら Palette を開くたびに閉じた状態から始まる。状態は設定として保存する。InfoPanel には常設は無い。
+- **ToolsPanel の中身**:
+  - 上段: SettingsShortcut のボタン列。候補は固定で、設定による出し入れは行わない。
 
-  | 候補 | 行き先 | 既定 |
-  |---|---|---|
-  | バージョン情報 | ms-settings:about | 表示 |
-  | サウンド | ms-settings:sound | 表示 |
-  | ネットワークとインターネット | ms-settings:network | 表示 |
-  | Wi-Fi | ms-settings:network-wifi | 非表示 |
-  | ディスプレイ | ms-settings:display | 非表示 |
-  | Bluetooth とデバイス | ms-settings:bluetooth | 非表示 |
-  | サウンド（従来のダイアログ） | mmsys.cpl | 非表示 |
+    | ボタン | 行き先 |
+    |---|---|
+    | 環境変数 | 従来の「環境変数」ダイアログ（`rundll32.exe sysdm.cpl,EditEnvironmentVariables`） |
+    | サウンド（従来のダイアログ） | mmsys.cpl |
+    | ネットワークとインターネット | ms-settings:network |
+    | Bluetooth とデバイス | ms-settings:bluetooth |
+    | ディスプレイ | ms-settings:display |
+    | バージョン情報 | ms-settings:about |
 
-- **表示**: Launcher の段の直下に、PinnedApp と区別できる記号アイコンで並べる。ホバーまたは選択で名前を表示する。
-- **操作**: クリックで行き先を開き、Palette を閉じる。文字入力による絞り込みは名前と別名（例: 「音量」「Wi-Fi」「バージョン」）に効く。
-- **起動**: 行き先をシェルに渡す。設定アプリが既に開いていればそのウインドウが該当ページに切り替わる（OS の挙動）。
+    クリックで行き先をシェルに渡して開き、Palette を閉じる。
+  - 本体: AudioControl。出力デバイスの一覧（既定に印）、クリックで既定の切替、音量スライダー、ミュートのトグル。デバイスの追加・削除は OS の通知で即時に一覧へ反映する。既定の切替は非公開インターフェースに依存する（ADR-0004）。切替に失敗した場合は通知し、ms-settings:sound を開く退避を提供する。AudioControl の操作では Palette を閉じない。
+- **InfoPanel の中身**:
+  - SystemSummary: デバイス名、Windows のエディション・バージョン・ビルド、CPU、メモリ容量、GPU を数行で表示し、「コピー」でプレーンテキストとしてクリップボードへ入れる。取得は InfoPanel を開いたときに行い、取得に時間がかかる項目は後から埋める。
+  - DeskDig の設定: 現在のホットキーと Trigger の有効状態を表示し、「設定画面を開く」ボタンで既存の設定画面へ。テーマ（Dark / Light）の切替は予定地として無効状態の項目を置く（§7）。
+- **絞り込みとの関係**: SidePanel の内容は絞り込みの対象外。文字入力は従来どおり WindowEntry と PinnedApp に効く。
+- **キーボード**: SidePanel 内の操作はマウスを前提とし、矢印キーの選択移動は対象外。
 
 ### 4.9 常駐と設定
 
@@ -123,7 +133,7 @@
   - 有効な TriggerSource と各設定（Hotkey のキー）
   - 表示形式（タイル格子 / 縦リスト）、格子の列数
   - 自動起動
-  - 表示する SettingsShortcut（候補ごとのオン/オフ）
+  - ToolsPanel の AlwaysShown（ピン型ボタンと連動）
   - PlacementProfile 一覧（WindowMatcher の編集と削除）
   - Favorite 一覧（削除）
 - 設定・PlacementProfile・Favorite・PinnedApp の並び順は `%APPDATA%\DeskDig\` 配下の JSON に保存する。RecentActivation は保存しない。
@@ -145,7 +155,11 @@
 6. Launcher に 40 件以上の PinnedApp が並び、ドラッグで順序を変えると再起動後も保たれる。既に開いている PinnedApp を押すと新規起動せず既存ウインドウが前面に出る。
 7. ホットキーで開いた Palette に文字を打つと、一致するウインドウと PinnedApp だけが残る。Enter で先頭を Activate する。
 8. 文字入力中に Esc で Palette が閉じ、外をクリックしても閉じる。
-9. Palette の SettingsShortcut「サウンド」をクリックすると、設定アプリのサウンドページが開いて Palette が閉じる。「音量」と入力すると「サウンド」だけが残る。設定画面で「Wi-Fi」をオンにすると、次に開いた Palette に Wi-Fi が現れる。
+9. 絞り込み行右端の「操作」アイコンを押すと Palette の右に ToolsPanel が開き、出力デバイスの一覧・音量・ミュートが見える。別の出力デバイスをクリックすると既定が切り替わり、Palette は開いたまま。イヤホンを抜くと一覧から即座に消える。
+10. ToolsPanel の「環境変数」を押すと従来の環境変数ダイアログが開き、Palette が閉じる。
+11. ToolsPanel のピン型ボタンをオンにして Palette を閉じ、再び開くと ToolsPanel も同時に開いている。オフにすると、次回は Palette だけが開く。
+12. 「歯車」アイコンを押すと InfoPanel が開き、デバイス名・Windows のバージョン・CPU・メモリ・GPU が表示される。「コピー」を押すとその内容がクリップボードに入る。
+13. SidePanel が開いた状態で Esc を押すと SidePanel だけが閉じ、もう一度押すと Palette が閉じる。SidePanel の内側をクリックしても Palette は閉じない。
 
 ## 7. MVP 外
 
@@ -155,6 +169,8 @@
 - 仮想デスクトップの名前表示（非公開 API 依存。ADR-0002 の条件を満たす場合のみ）。
 - MouseButton / ScreenCorner など追加の TriggerSource。
 - 数値入力による Placement の微調整 UI。
+- テーマ（Dark / Light）の切替。XAML の色をリソース辞書に切り出してから行う。InfoPanel に予定地だけ置く。
+- Wi-Fi / Bluetooth の状態表示と無線のオン/オフを SidePanel 内で行うこと。接続先の選択やペアリングは OS の画面に任せる方針。
 
 構想段階で挙がったが予定に含めていないもの:
 

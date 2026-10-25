@@ -61,12 +61,38 @@ Windows のタスクバーに固定されているアプリ 1 件。ユーザー
 _Avoid_: Shortcut, .lnk（実装詳細）, 登録アプリ, Favorite
 
 **SettingsShortcut**:
-Windows の設定アプリ内の特定ページ（バージョン情報、サウンド、ネットワークなど）へ一発で移動するための項目。行き先は OS が定める URI で、ユーザーが登録するのではなく、用意した候補から表示するものを選ぶ。PinnedApp とは別の段に出す。
+Windows の設定アプリ内の特定ページ（バージョン情報、ネットワークなど）や従来のダイアログ（環境変数、サウンド）へ一発で移動するためのボタン。行き先は OS が定める URI またはコントロールパネル項目で、ユーザーが登録するものではなく固定の一覧。ToolsPanel の上段に並ぶ。
 _Avoid_: QuickAction, 設定ボタン, コンパネリンク, Shortcut（PinnedApp の実体である .lnk と紛れる）
+
+### 横パネル
+
+**SidePanel**:
+Palette の横に同じ高さで開く補助面。ToolsPanel と InfoPanel の 2 種類があり、同時に開くのはどちらか一方。Palette の位置は動かさない。
+_Avoid_: Drawer, Flyout, サイドバー, タブ
+
+**ToolsPanel**:
+SidePanel の一つ。上段に SettingsShortcut のボタン列、本体に AudioControl を持つ。絞り込み行右端の「操作」アイコンで開く。
+_Avoid_: 操作盤パネル, コンパネ, QuickSettings
+
+**InfoPanel**:
+SidePanel の一つ。SystemSummary と、DeskDig 自身の設定への入口（将来のテーマ切替の予定地を含む）を持つ。絞り込み行右端の「歯車」アイコンで開く。
+_Avoid_: 設定パネル, AboutPanel
+
+**AlwaysShown**:
+ToolsPanel を Palette と同時に毎回開く状態。ToolsPanel 上のピン型ボタンで切り替え、設定として保存する。AlwaysShown でなければ Palette を開くたびに閉じた状態から始まる。
+_Avoid_: Pin / ピン留め（タスクバーの語として予約。UI のアイコンがピン型であっても語としては使わない）, Sticky, Docked
+
+**AudioControl**:
+ToolsPanel 本体の操作盤。出力デバイスの一覧と既定の切替、音量、ミュート。デバイスの抜き差しは OS の通知で即時に反映する。
+_Avoid_: SoundPanel, ミキサー, 音声設定
+
+**SystemSummary**:
+InfoPanel に表示する PC の要約。デバイス名、Windows のバージョンとビルド、CPU、メモリ、GPU。人に伝えるためにクリップボードへコピーできる。
+_Avoid_: PC スペック, SystemInfo, バージョン情報（SettingsShortcut の行き先名と紛れる）
 
 ## Flagged ambiguities
 
-- **「固定」**: タスクバーの固定は **Pin / PinnedApp**、Palette 内の固定は **Favorite**。日本語で「固定」とだけ言われたら確認する。
+- **「固定」**: タスクバーの固定は **Pin / PinnedApp**、Palette 内の固定は **Favorite**、ToolsPanel の常設は **AlwaysShown**。日本語で「固定」「ピン」とだけ言われたら確認する。
 - **「履歴」**: RecentActivation のこと。将来クリップボード機能を足す場合、その履歴には別語を与える。
 - **比喩として退けた語**: 構想段階で既存ツールの名前や「ゾーン」「画角」といった比喩で機能を説明していたが、これらは正式な用語ではない。コード・ファイル名・UI 文言には上記の批准語だけを使う。
 
