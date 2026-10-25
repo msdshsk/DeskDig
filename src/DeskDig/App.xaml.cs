@@ -37,7 +37,9 @@ public partial class App : Application
             for (int i = 0; i < apps.Count; i++)
             {
                 var a = apps[i];
-                Diagnostics.Log($"  {i + 1,2}. {a.Name} | id={a.Id} | exe={a.TargetExecutablePath ?? "-"} | aumid={a.AppUserModelId ?? "-"}");
+                string logo = a.AppUserModelId is null ? "-" :
+                    $"dark={PackagedAppLogo.ResolveFile(a.AppUserModelId, 32, Core.LogoBackdrop.Dark) ?? "(shell)"} light={PackagedAppLogo.ResolveFile(a.AppUserModelId, 32, Core.LogoBackdrop.Light) ?? "(shell)"}";
+                Diagnostics.Log($"  {i + 1,2}. {a.Name} | id={a.Id} | exe={a.TargetExecutablePath ?? "-"} | aumid={a.AppUserModelId ?? "-"} | logo: {logo}");
             }
             Shutdown();
             return;

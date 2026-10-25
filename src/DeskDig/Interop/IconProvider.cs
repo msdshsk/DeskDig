@@ -32,11 +32,26 @@ internal sealed class IconProvider
         return parsingName is null ? null : ForParsingName(parsingName, size);
     }
 
+    private const string AppsFolderPrefix = "shell:AppsFolder\\";
+
     public ImageSource? ForParsingName(string parsingName, int size)
     {
-        string key = $"{size}|{parsingName}";
+        bool packaged = parsingName.StartsWith(AppsFolderPrefix, StringComparison.OrdinalIgnoreCase);
+        var backdrop = Theming.ThemeManager.Effective == Core.Settings.Theme.Light ? LogoBackdrop.Light : LogoBackdrop.Dark;
+        // パッケージ型はテーマで選ぶロゴが変わるので、キャッシュのキーにも背景を含める
+        string key = packaged ? $"{size}|{parsingName}|{backdrop}" : $"{size}|{parsingName}";
         if (_cache.TryGetValue(key, out var cached)) return cached;
         ImageSource? image = null;
+        if (packaged)
+        {
+            // パッケージのロゴを直接読む。シェル経由だと一部のアプリで真っ黒な画像になる
+            image = PackagedAppLogo.Load(parsingName[AppsFolderPrefix.Length..], size, backdrop);
+            if (image is not null)
+            {
+                _cache[key] = image;
+                return image;
+            }
+        }
         try
         {
             var iid = IID_IShellItemImageFactory;
