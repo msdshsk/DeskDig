@@ -121,9 +121,17 @@
   - 本体: AudioControl。**出力（スピーカー）** と **入力（マイク）** の 2 段を独立して持ち、各段にデバイスの一覧（既定に印）、クリックで既定の切替、音量スライダー、ミュートのトグルがある。出力と入力の既定は別々に選べる（例: 出力はマイク付きイヤホン、入力は内蔵マイク）。デバイスの追加・削除は OS の通知で即時に両段へ反映する。既定の切替は非公開インターフェースに依存する（ADR-0004）。切替に失敗した場合は通知し、ms-settings:sound を開く退避を提供する。AudioControl の操作では Palette を閉じない。
 - **InfoPanel の中身**:
   - SystemSummary: デバイス名、Windows のエディション・バージョン・ビルド、CPU、メモリ容量、GPU を数行で表示し、「コピー」でプレーンテキストとしてクリップボードへ入れる。取得は InfoPanel を開いたときに行い、取得に時間がかかる項目は後から埋める。
-  - DeskDig の設定: 現在のホットキーと Trigger の有効状態を表示し、「設定画面を開く」ボタンで既存の設定画面へ。テーマ（Dark / Light）の切替は予定地として無効状態の項目を置く（§7）。
+  - DeskDig の設定: 現在のホットキーと Trigger の有効状態を表示し、「設定画面を開く」ボタンで既存の設定画面へ。Theme の選択（Dark / Light / System）をここに置き、選ぶと即時に反映する（§4.10）。
 - **絞り込みとの関係**: SidePanel の内容は絞り込みの対象外。文字入力は従来どおり WindowEntry と PinnedApp に効く。
 - **キーボード**: SidePanel 内の操作はマウスを前提とし、矢印キーの選択移動は対象外。
+
+### 4.10 Theme
+
+- Dark / Light / System の三択。System は Windows の「アプリモード」（個人用設定 > 色）に追従し、Windows 側が変わったときも再起動なしに追従する。既定は System。
+- 対象は Palette、SidePanel、設定画面のすべての配色（背景、面、罫線、文字、弱い文字、強調、警告色、入力欄、選択枠）。色は XAML に直書きせず、Theme ごとのリソース辞書に集約し、切替時に辞書を差し替える。
+- Light でも Dark でも、PinnedApp のアイコン背景の板は Palette の面より一段強い対比を保ち、透過の上に黒または白で描かれたアイコンがどちらのテーマでも見えるようにする。
+- トレイアイコンと紹介ページのロゴは Theme の対象外。
+- 選択は InfoPanel と設定画面の両方から行え、設定として保存する。
 
 ### 4.9 常駐と設定
 
@@ -134,6 +142,7 @@
   - 表示形式（タイル格子 / 縦リスト）、格子の列数
   - 自動起動
   - ToolsPanel の AlwaysShown（ピン型ボタンと連動）
+  - Theme（Dark / Light / System。InfoPanel の選択と連動）
   - PlacementProfile 一覧（WindowMatcher の編集と削除）
   - Favorite 一覧（削除）
 - 設定・PlacementProfile・Favorite・PinnedApp の並び順は `%APPDATA%\DeskDig\` 配下の JSON に保存する。RecentActivation は保存しない。
@@ -160,6 +169,7 @@
 11. ToolsPanel のピン型ボタンをオンにして Palette を閉じ、再び開くと ToolsPanel も同時に開いている。オフにすると、次回は Palette だけが開く。
 12. 「歯車」アイコンを押すと InfoPanel が開き、デバイス名・Windows のバージョン・CPU・メモリ・GPU が表示される。「コピー」を押すとその内容がクリップボードに入る。
 13. SidePanel が開いた状態で Esc を押すと SidePanel だけが閉じ、もう一度押すと Palette が閉じる。SidePanel の内側をクリックしても Palette は閉じない。
+14. InfoPanel で Theme を Light にすると、Palette・SidePanel・設定画面が即座に明るい配色になり、再起動後も保たれる。System にして Windows の「色」をダークに切り替えると、DeskDig も再起動なしで追従する。Light でも黒いアイコン、Dark でも白いアイコンが固定アプリの段で見える。
 
 ## 7. MVP 外
 
@@ -169,7 +179,6 @@
 - 仮想デスクトップの名前表示（非公開 API 依存。ADR-0002 の条件を満たす場合のみ）。
 - MouseButton / ScreenCorner など追加の TriggerSource。
 - 数値入力による Placement の微調整 UI。
-- テーマ（Dark / Light）の切替。XAML の色をリソース辞書に切り出してから行う。InfoPanel に予定地だけ置く。
 - Wi-Fi / Bluetooth の状態表示と無線のオン/オフを SidePanel 内で行うこと。接続先の選択やペアリングは OS の画面に任せる方針。
 
 構想段階で挙がったが予定に含めていないもの:

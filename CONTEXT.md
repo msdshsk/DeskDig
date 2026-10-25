@@ -86,6 +86,10 @@ _Avoid_: Pin / ピン留め（タスクバーの語として予約。UI のア�
 ToolsPanel 本体の操作盤。出力（スピーカー / イヤホン）と入力（マイク）を独立した段として持ち、それぞれにデバイスの一覧と既定の切替、音量、ミュートがある。出力と入力の既定は別々に選べる（マイク付きイヤホンを出力にしつつ、内蔵マイクを入力にする等）。デバイスの抜き差しは OS の通知で即時に反映する。
 _Avoid_: SoundPanel, ミキサー, 音声設定
 
+**Theme**:
+Palette・SidePanel・設定画面の配色の組。Dark、Light、System（Windows の「アプリモード」に追従）の三択で、切替は再起動なしに即時反映する。
+_Avoid_: スキン, カラースキーム, ダークモード（Theme の値のひとつに過ぎない）
+
 **SystemSummary**:
 InfoPanel に表示する PC の要約。デバイス名、Windows のバージョンとビルド、CPU、メモリ、GPU。人に伝えるためにクリップボードへコピーできる。
 _Avoid_: PC スペック, SystemInfo, バージョン情報（SettingsShortcut の行き先名と紛れる）
